@@ -1,0 +1,107 @@
+project-root/
+├── frontend/
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── src/
+│   │   ├── main.js
+│   │   ├── App.vue
+│   │   ├── api/
+│   │   │   ├── request.js
+│   │   │   ├── auth.js             # 登录/登出相关接口
+│   │   │   ├── logs.js
+│   │   │   ├── models.js
+│   │   │   ├── datasources.js
+│   │   ├── components/
+│   │   │   ├── LoginForm.vue       # 登录表单组件
+│   │   │   ├── LogQuery.vue
+│   │   │   ├── ModelDialog.vue
+│   │   │   ├── DataSourceForm.vue
+│   │   ├── pages/
+│   │   │   ├── Login.vue           # 登录页面
+│   │   │   ├── Dashboard.vue
+│   │   │   ├── Logs.vue
+│   │   │   ├── Models.vue
+│   │   │   ├── DataSources.vue
+│   │   ├── router/
+│   │   │   └── index.js
+│   │   ├── store/
+│   │   │   ├── auth.js             # 登录状态、token
+│   │   │   ├── logs.js
+│   │   │   ├── models.js
+│   │   │   ├── datasources.js
+│   │   ├── styles/
+│   │   │   └── global.css
+│   │   └── utils/
+│   │       └── helpers.js
+│   └── public/
+│       └── favicon.ico
+│
+├── backend/
+│   ├── go.mod
+│   ├── go.sum
+│   ├── cmd/
+│   │   └── main.go
+│   ├── internal/
+│   │   ├── server/
+│   │   │   └── server.go
+│   │   ├── router/
+│   │   │   └── router.go
+│   │   ├── handler/
+│   │   │   ├── auth.go             # 登录、登出、JWT 验证
+│   │   │   ├── logs.go
+│   │   │   ├── models.go
+│   │   │   ├── datasources.go
+│   │   ├── service/
+│   │   │   ├── auth_service.go
+│   │   │   ├── logs_service.go
+│   │   │   ├── models_service.go
+│   │   │   ├── datasources_service.go
+│   │   ├── repository/
+│   │   │   ├── users_repo.go       # 登录用户数据访问
+│   │   │   ├── logs_repo.go
+│   │   │   ├── models_repo.go
+│   │   │   ├── datasources_repo.go
+│   │   ├── config/
+│   │   │   └── config.go
+│   │   ├── model/
+│   │   │   ├── user.go
+│   │   │   ├── logs.go
+│   │   │   ├── models.go
+│   │   │   ├── datasources.go
+│   │   └── utils/
+│   │       ├── logger.go
+│   │       └── response.go
+│   └── docs/
+│       └── swagger.yaml
+│
+└── README.md
+
+
+
+说明
+前端 (frontend)
+
+api/ → axios 封装的 API 调用层，解耦前后端。
+
+pages/ → 对应功能模块的页面。
+
+components/ → 公共 UI 组件（比如日志查询框、模型对话框）。
+
+store/ → 用 Pinia 管理全局状态（数据源、日志查询结果、模型配置）。
+
+后端 (backend)
+
+cmd/ → Go 应用的入口，启动服务。
+
+internal/router/ → 定义 REST API 路由。
+
+internal/handler/ → 接收 HTTP 请求，调用 service。
+
+internal/service/ → 核心业务逻辑层。
+
+internal/repository/ → 数据访问层，可以对接 Loki/ELK。
+
+internal/model/ → 定义实体结构体。
+
+internal/utils/ → 工具方法，比如日志和统一响应。

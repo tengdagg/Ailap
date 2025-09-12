@@ -1,0 +1,18 @@
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.DS_Store
+
+# Backend
+backend/bin/
+backend/tmp/
+backend/coverage/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*
+
