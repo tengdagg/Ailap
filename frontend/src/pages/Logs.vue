@@ -1,5 +1,5 @@
 <template>
-  <page-container title="日志查询" subtitle="Grafana 风格查询编辑器">
+  <page-container>
     <div style="margin-bottom:12px; display:flex; gap:12px; align-items:center">
       <span>数据源</span>
       <a-select v-model="datasource" :options="dsOptions" style="width:200px" />
@@ -15,16 +15,11 @@
     </div>
 
     <loki-editor v-if="datasource==='loki'" :datasource-id="selectedLokiId" @run="onRunLoki" @history="openHistory" @inspect="openInspector" />
-    <elasticsearch-editor v-else @run="onRunES" />
+    <elasticsearch-editor v-else @run="onRunES" @history="openHistory" @inspect="openInspector" />
 
     <div v-if="rows.length > 0" style="margin-top:12px">
       <div style="margin-bottom:8px; color: #666;">查询结果: {{ rows.length }} 条记录</div>
       
-      <!-- Debug: Show first few records -->
-      <details style="margin-bottom:8px; font-size:12px; color:#666;">
-        <summary>调试信息 (点击展开)</summary>
-        <pre>{{ JSON.stringify(rows.slice(0, 2), null, 2) }}</pre>
-      </details>
       
       <!-- 使用原生表格替代 Arco 表格 -->
       <div style="border: 1px solid #e5e6eb; border-radius: 4px; overflow: hidden;">
@@ -69,13 +64,120 @@
       暂无查询结果，请点击"运行查询"执行查询
     </div>
 
-    <a-modal v-model:visible="historyVisible" title="查询历史记录" :footer="false" width="720px">
-      <a-table :data="historyItems" row-key="id" :pagination="false">
-        <a-table-column title="ID" data-index="id" :width="80" />
-        <a-table-column title="Mode" data-index="mode" :width="100" />
-        <a-table-column title="Engine" data-index="engine" :width="120" />
-        <a-table-column title="Query" data-index="query" />
-      </a-table>
+     <!-- 历史记录抽屉 -->
+    <a-drawer v-model:visible="historyVisible" title="" width="600px" placement="bottom" :height="450" :footer="false">
+      <!-- 搜索框 -->
+      <div style="margin-bottom: 12px;">
+        <a-input
+          v-model="searchKeyword"
+          placeholder="搜索查询历史..."
+          allow-clear
+          @input="onSearchInput"
+        >
+          <template #prefix>
+            <icon-search />
+          </template>
+        </a-input>
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <a-tabs v-model:active-key="historyTab" type="line">
+          <a-tab-pane key="recent" title="查询历史记录" />
+          <a-tab-pane key="favorite" title="已收藏查询" />
+        </a-tabs>
+      </div>
+
+      <div v-if="historyItems.length === 0" style="text-align: center; padding: 40px; color: #999;">
+        {{ historyTab === 'favorite' ? '暂无收藏的查询' : '暂无查询历史' }}
+      </div>
+      
+      <div v-else style="max-height: 280px; overflow-y: auto;">
+        <div v-for="item in historyItems" :key="item.id" 
+             style="border: 1px solid #e5e6eb; border-radius: 6px; padding: 12px; margin-bottom: 8px; background: #fafafa;">
+          
+          <!-- 时间和操作按钮在同一行 -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; color: #666;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
+              <a-tag :color="item.engine === 'loki' ? 'blue' : 'green'" size="small">{{ item.engine }}</a-tag>
+              <a-tag color="gray" size="small">{{ item.mode }}</a-tag>
+            </div>
+            
+            <!-- 操作按钮组 -->
+            <div style="display: flex; gap: 4px;">
+              <a-tooltip content="编辑备注">
+                <a-button 
+                  size="mini" 
+                  type="text" 
+                  @click="showNoteModal(item)"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center;"
+                >
+                  <icon-tag />
+                </a-button>
+              </a-tooltip>
+              <a-tooltip content="删除记录">
+                <a-button 
+                  size="mini" 
+                  type="text" 
+                  @click="confirmDelete(item)"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: #f53f3f;"
+                >
+                  <icon-delete />
+                </a-button>
+              </a-tooltip>
+              <a-tooltip :content="item.isFavorite ? '取消收藏' : '添加收藏'">
+                <a-button 
+                  size="mini" 
+                  type="text" 
+                  :style="{ 
+                    width: '20px', 
+                    height: '20px', 
+                    padding: '0', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: item.isFavorite ? '#faad14' : '#8c8c8c'
+                  }"
+                  @click="toggleQueryFavorite(item)"
+                >
+                  <icon-star-fill v-if="item.isFavorite" />
+                  <icon-star v-else />
+                </a-button>
+              </a-tooltip>
+              <a-tooltip content="执行查询">
+                <a-button 
+                  size="mini" 
+                  type="text" 
+                  @click="executeQuery(item)"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: #1890ff;"
+                >
+                  <icon-send />
+                </a-button>
+              </a-tooltip>
+            </div>
+          </div>
+          
+          <!-- 备注显示 -->
+          <div v-if="item.note" style="margin-bottom: 8px; font-size: 12px; color: #666; font-style: italic;">
+            💬 {{ item.note }}
+          </div>
+          
+          <div style="font-family: monospace; font-size: 13px; word-break: break-all; background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #e9ecef;">
+            {{ item.query || '-' }}
+          </div>
+        </div>
+      </div>
+    </a-drawer>
+
+    <!-- 备注编辑模态框 -->
+    <a-modal v-model:visible="noteModalVisible" title="编辑备注" @ok="saveNote" @cancel="cancelNote">
+      <a-textarea 
+        v-model="noteContent" 
+        placeholder="为这个查询添加备注..."
+        :rows="3"
+        :max-length="200"
+        show-word-limit
+      />
     </a-modal>
 
     <a-modal v-model:visible="inspectVisible" title="查询检查器" :footer="false">
@@ -86,12 +188,14 @@
   </page-container>
 </template>
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import PageContainer from '@/components/PageContainer.vue'
 import LokiEditor from '@/components/logs/LokiEditor.vue'
 import ElasticsearchEditor from '@/components/logs/ElasticsearchEditor.vue'
-import { queryLogs, history as apiHistory, inspect } from '@/api/logs'
+import { queryLogs, history as apiHistory, inspect, toggleFavorite, updateNote, deleteHistory } from '@/api/logs'
 import { listDataSources } from '@/api/datasources'
+import { Message, Modal } from '@arco-design/web-vue'
+import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch } from '@arco-design/web-vue/es/icon'
 
 const datasource = ref('loki')
 const dsOptions = [ { label: 'Loki', value: 'loki' }, { label: 'Elasticsearch', value: 'elasticsearch' } ]
@@ -112,9 +216,17 @@ const step = ref('60s')
 const direction = ref('BACKWARD')
 
 const historyVisible = ref(false)
+const historyTab = ref('recent')
 const historyItems = ref([])
+const allHistoryItems = ref([]) // 存储所有历史记录
+const searchKeyword = ref('')
 const inspectVisible = ref(false)
 const inspectUrl = ref('')
+
+// 备注编辑相关
+const noteModalVisible = ref(false)
+const noteContent = ref('')
+const currentEditItem = ref(null)
 
 const loading = ref(false)
 const rows = ref([])
@@ -222,15 +334,200 @@ async function runQuery(params) {
 
 async function openHistory() {
   historyVisible.value = true
-  const { data } = await apiHistory()
-  historyItems.value = data?.data?.items || []
+  await loadHistoryData()
 }
+
+async function loadHistoryData() {
+  try {
+    const { data } = await apiHistory(historyTab.value)
+    allHistoryItems.value = data?.data?.items || []
+    filterHistoryItems() // 应用搜索过滤
+  } catch (error) {
+    console.error('Failed to load history:', error)
+    allHistoryItems.value = []
+    historyItems.value = []
+  }
+}
+
+// 根据搜索关键词过滤历史记录
+function filterHistoryItems() {
+  if (!searchKeyword.value.trim()) {
+    historyItems.value = allHistoryItems.value
+    return
+  }
+  
+  const keyword = searchKeyword.value.toLowerCase()
+  historyItems.value = allHistoryItems.value.filter(item => {
+    return (
+      item.query?.toLowerCase().includes(keyword) ||
+      item.note?.toLowerCase().includes(keyword) ||
+      item.engine?.toLowerCase().includes(keyword) ||
+      item.mode?.toLowerCase().includes(keyword)
+    )
+  })
+}
+
+// 搜索输入处理
+function onSearchInput() {
+  filterHistoryItems()
+}
+
+async function toggleQueryFavorite(item) {
+  try {
+    const { data } = await toggleFavorite(item.id)
+    if (data?.code === 0) {
+      // 更新本地状态
+      item.isFavorite = data.data.item.isFavorite
+      // 如果当前在收藏页面且取消收藏，则重新加载数据
+      if (historyTab.value === 'favorite' && !item.isFavorite) {
+        await loadHistoryData()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to toggle favorite:', error)
+  }
+}
+
+function useQuery(item) {
+  // 根据引擎类型设置对应的查询内容
+  if (item.engine === 'loki') {
+    datasource.value = 'loki'
+    // 这里可以进一步设置 LokiEditor 的查询内容
+  } else if (item.engine === 'elasticsearch') {
+    datasource.value = 'elasticsearch'
+    // 这里可以进一步设置 ElasticsearchEditor 的查询内容
+  }
+  historyVisible.value = false
+}
+
+// 显示备注编辑模态框
+function showNoteModal(item) {
+  currentEditItem.value = item
+  noteContent.value = item.note || ''
+  noteModalVisible.value = true
+}
+
+// 保存备注
+async function saveNote() {
+  if (!currentEditItem.value) return
+  
+  try {
+    const { data } = await updateNote(currentEditItem.value.id, noteContent.value)
+    if (data?.code === 0) {
+      currentEditItem.value.note = noteContent.value
+      Message.success('备注保存成功')
+      noteModalVisible.value = false
+    }
+  } catch (error) {
+    console.error('Failed to save note:', error)
+    Message.error('保存备注失败')
+  }
+}
+
+// 取消编辑备注
+function cancelNote() {
+  noteModalVisible.value = false
+  noteContent.value = ''
+  currentEditItem.value = null
+}
+
+// 确认删除
+function confirmDelete(item) {
+  Modal.confirm({
+    title: '确认删除',
+    content: '确定要删除这条查询记录吗？此操作不可恢复。',
+    onOk: () => deleteHistoryItem(item)
+  })
+}
+
+// 删除历史记录
+async function deleteHistoryItem(item) {
+  try {
+    const { data } = await deleteHistory(item.id)
+    if (data?.code === 0) {
+      Message.success('删除成功')
+      await loadHistoryData() // 重新加载数据
+    }
+  } catch (error) {
+    console.error('Failed to delete history:', error)
+    Message.error('删除失败')
+  }
+}
+
+// 执行查询
+async function executeQuery(item) {
+  try {
+    // 设置数据源
+    if (item.engine === 'loki') {
+      datasource.value = 'loki'
+    } else if (item.engine === 'elasticsearch') {
+      datasource.value = 'elasticsearch'
+    }
+    
+    // 关闭抽屉
+    historyVisible.value = false
+    
+    // 构造查询参数并执行
+    const { start, end } = computeTimeRange()
+    let dsId = ''
+    if (item.engine === 'loki') {
+      dsId = selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || ''
+    } else {
+      dsId = selectedEsId.value || localStorage.getItem('last_es_ds_id') || ''
+    }
+    
+    const params = {
+      engine: item.engine,
+      datasourceId: dsId,
+      start,
+      end,
+      step: step.value,
+      direction: direction.value,
+      mode: item.mode,
+      query: item.query
+    }
+    
+    loading.value = true
+    const { data } = await queryLogs(params)
+    rows.value = data?.data?.items || []
+    currentPage.value = 1
+    
+    Message.success('查询执行成功')
+  } catch (error) {
+    console.error('Execute query error:', error)
+    Message.error('查询执行失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 监听 tab 切换
+watch(historyTab, async () => {
+  if (historyVisible.value) {
+    await loadHistoryData()
+  }
+})
+
+// 清空搜索关键词当抽屉关闭时
+watch(historyVisible, (visible) => {
+  if (!visible) {
+    searchKeyword.value = ''
+  }
+})
 
 async function openInspector(queryStr = '') {
   inspectVisible.value = true
   const { start, end } = computeTimeRange()
-  const dsId = selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || ''
-  const params = { engine: 'loki', datasourceId: dsId, start, end, step: step.value, direction: direction.value }
+  
+  let params
+  if (datasource.value === 'loki') {
+    const dsId = selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || ''
+    params = { engine: 'loki', datasourceId: dsId, start, end, step: step.value, direction: direction.value }
+  } else {
+    const dsId = selectedEsId.value || localStorage.getItem('last_es_ds_id') || ''
+    params = { engine: 'elasticsearch', datasourceId: dsId, start, end }
+  }
+  
   if (queryStr) params.query = queryStr
   const { data } = await inspect(params)
   inspectUrl.value = data?.data?.url || ''

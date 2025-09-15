@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -119,7 +121,7 @@ func (h *LogsHandler) Query(c *gin.Context) {
 
 		req, _ := http.NewRequest(http.MethodGet, reqURL, nil)
 		applyAuthHeaders(req, cfg)
-		client := &http.Client{Timeout: 15 * time.Second}
+		client := createHTTPClient(cfg, 15*time.Second)
 		resp, err := client.Do(req)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{"code": 0, "message": err.Error(), "data": gin.H{"items": []interface{}{}}})
@@ -127,12 +129,13 @@ func (h *LogsHandler) Query(c *gin.Context) {
 		}
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
+		// Save query history regardless of result
+		_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "loki", Mode: mode, Query: query}).Error
+
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			c.JSON(http.StatusOK, gin.H{"code": 1, "message": string(body), "data": gin.H{"items": []interface{}{}}})
 			return
 		}
-
-		_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "loki", Mode: mode, Query: query}).Error
 
 		items := flattenLokiToRows(body)
 
@@ -205,7 +208,7 @@ func (h *LogsHandler) Query(c *gin.Context) {
 	req, _ := http.NewRequest(http.MethodPost, searchURL, strings.NewReader(string(payload)))
 	req.Header.Set("Content-Type", "application/json")
 	applyAuthHeaders(req, cfg)
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := createHTTPClient(cfg, 15*time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "message": err.Error(), "data": gin.H{"items": []interface{}{}}})
@@ -213,6 +216,10 @@ func (h *LogsHandler) Query(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
+
+	// Save query history regardless of result
+	_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "elasticsearch", Mode: mode, Query: query}).Error
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": string(body), "data": gin.H{"items": []interface{}{}}})
 		return
@@ -240,7 +247,7 @@ func (h *LogsHandler) Suggestions(c *gin.Context) {
 	}
 	req, _ := http.NewRequest(http.MethodGet, u, nil)
 	applyAuthHeaders(req, cfg)
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := createHTTPClient(cfg, 5*time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": []interface{}{}}})
@@ -284,7 +291,7 @@ func (h *LogsHandler) LabelValues(c *gin.Context) {
 	}
 	req, _ := http.NewRequest(http.MethodGet, u, nil)
 	applyAuthHeaders(req, cfg)
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := createHTTPClient(cfg, 5*time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": []interface{}{}}})
@@ -305,11 +312,88 @@ func (h *LogsHandler) LabelValues(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": items}})
 }
 
-// History returns last 20 queries
+// History returns query history with auto cleanup
 func (h *LogsHandler) History(c *gin.Context) {
+	// Auto cleanup: remove non-favorite queries older than 14 days
+	cutoff := time.Now().AddDate(0, 0, -14)
+	database.GetDB().Where("is_favorite = ? AND created_at < ?", false, cutoff).Delete(&model.LogQueryHistory{})
+
+	queryType := c.DefaultQuery("type", "recent") // recent or favorite
 	var items []model.LogQueryHistory
-	database.GetDB().Order("id desc").Limit(20).Find(&items)
+
+	if queryType == "favorite" {
+		database.GetDB().Where("is_favorite = ?", true).Order("updated_at desc").Find(&items)
+	} else {
+		database.GetDB().Order("id desc").Limit(50).Find(&items)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": items}})
+}
+
+// ToggleFavorite toggles the favorite status of a query
+func (h *LogsHandler) ToggleFavorite(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "missing id"})
+		return
+	}
+
+	var item model.LogQueryHistory
+	if err := database.GetDB().First(&item, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 1, "message": "query not found"})
+		return
+	}
+
+	item.IsFavorite = !item.IsFavorite
+	item.UpdatedAt = time.Now()
+	database.GetDB().Save(&item)
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"item": item}})
+}
+
+// UpdateNote updates the note of a query
+func (h *LogsHandler) UpdateNote(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "missing id"})
+		return
+	}
+
+	var req struct {
+		Note string `json:"note"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "invalid request"})
+		return
+	}
+
+	var item model.LogQueryHistory
+	if err := database.GetDB().First(&item, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 1, "message": "query not found"})
+		return
+	}
+
+	item.Note = req.Note
+	item.UpdatedAt = time.Now()
+	database.GetDB().Save(&item)
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"item": item}})
+}
+
+// DeleteHistory deletes a query history item
+func (h *LogsHandler) DeleteHistory(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "missing id"})
+		return
+	}
+
+	if err := database.GetDB().Delete(&model.LogQueryHistory{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "failed to delete"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
 }
 
 // Inspect: loki -> URL; elasticsearch -> {url, body}
@@ -505,6 +589,65 @@ func resolveElasticsearchDatasource(id string) (ds model.DataSource, cfg map[str
 	return ds, cfg, endpoint, true
 }
 
+// createHTTPClient creates an HTTP client with TLS configuration
+func createHTTPClient(cfg map[string]interface{}, timeout time.Duration) *http.Client {
+	transport := &http.Transport{}
+
+	// TLS configuration
+	if tlsCfg := getTLSConfig(cfg); tlsCfg != nil {
+		transport.TLSClientConfig = tlsCfg
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+	}
+}
+
+// getTLSConfig extracts TLS configuration from datasource config
+func getTLSConfig(cfg map[string]interface{}) *tls.Config {
+	if cfg == nil {
+		return nil
+	}
+
+	tlsData, ok := cfg["tls"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	tlsConfig := &tls.Config{}
+
+	// Skip certificate verification
+	if skipVerify, ok := tlsData["skipVerify"].(bool); ok && skipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	// Server name for TLS
+	if serverName, ok := tlsData["serverName"].(string); ok && serverName != "" {
+		tlsConfig.ServerName = serverName
+	}
+
+	// CA certificate for self-signed certificates
+	if caCert, ok := tlsData["caCert"].(string); ok && caCert != "" {
+		caCertPool := x509.NewCertPool()
+		if caCertPool.AppendCertsFromPEM([]byte(caCert)) {
+			tlsConfig.RootCAs = caCertPool
+		}
+	}
+
+	// Client certificate authentication
+	if clientCert, ok := tlsData["clientCert"].(string); ok && clientCert != "" {
+		if clientKey, ok := tlsData["clientKey"].(string); ok && clientKey != "" {
+			cert, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
+			if err == nil {
+				tlsConfig.Certificates = []tls.Certificate{cert}
+			}
+		}
+	}
+
+	return tlsConfig
+}
+
 func applyAuthHeaders(req *http.Request, cfg map[string]interface{}) {
 	if cfg == nil {
 		return
@@ -518,6 +661,17 @@ func applyAuthHeaders(req *http.Request, cfg map[string]interface{}) {
 	if username, ok := cfg["username"].(string); ok && username != "" {
 		if password, ok := cfg["password"].(string); ok && password != "" {
 			req.SetBasicAuth(username, password)
+		}
+	}
+
+	// Apply custom headers and cookies
+	if httpCfg, ok := cfg["http"].(map[string]interface{}); ok {
+		if cookies, ok := httpCfg["allowedCookies"].([]interface{}); ok {
+			for _, cookie := range cookies {
+				if cookieStr, ok := cookie.(string); ok && cookieStr != "" {
+					req.Header.Add("Cookie", cookieStr)
+				}
+			}
 		}
 	}
 }

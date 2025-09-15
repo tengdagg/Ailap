@@ -1,16 +1,9 @@
 <template>
-  <page-container title="Elasticsearch 配置" subtitle="配置 Elasticsearch 数据源连接信息">
+  <page-container>
     <a-form :model="form" :rules="rules" layout="vertical" style="max-width:900px">
-      <a-grid :cols="24" :col-gap="16">
-        <a-grid-item :span="18">
-          <a-form-item label="名称" field="name" required>
-            <a-input v-model="form.name" />
-          </a-form-item>
-        </a-grid-item>
-        <a-grid-item :span="6" style="display:flex;align-items:flex-end">
-          <a-switch v-model="form.isDefault">默认</a-switch>
-        </a-grid-item>
-      </a-grid>
+      <a-form-item label="名称" field="name" required>
+        <a-input v-model="form.name" />
+      </a-form-item>
 
       <a-divider>连接</a-divider>
       <a-form-item label="URL *" field="endpoint" required validate-trigger="blur">
@@ -75,11 +68,11 @@
       </a-modal>
 
       <a-divider>高级设置</a-divider>
-      <a-form-item label="允许的 Cookie">
+      <a-form-item label="允许的 Cookie" help="用于身份验证的Cookie，每行一个">
         <a-input-tag v-model="form.http.allowedCookies" placeholder="回车新增" />
       </a-form-item>
-      <a-form-item label="超时时间 (秒)">
-        <a-input-number v-model="form.http.timeout" placeholder="单位：秒" :min="0" />
+      <a-form-item label="超时时间 (秒)" help="HTTP请求超时时间，默认30秒">
+        <a-input-number v-model="form.http.timeout" placeholder="30" :min="1" :max="300" />
       </a-form-item>
 
       <a-divider>Elasticsearch 细节</a-divider>
@@ -179,14 +172,13 @@ const clientAuthVisible = ref(false)
 const form = reactive({
   name: 'elasticsearch',
   type: 'elasticsearch',
-  isDefault: false,
   endpoint: '',
   authType: 'none',
   username: '',
   password: '',
   apiKey: '',
   tls: { addSelfSigned: false, clientAuth: false, skipVerify: false, caCert: '', serverName: '', clientCert: '', clientKey: '' },
-  http: { allowedCookies: [], timeout: undefined },
+  http: { allowedCookies: [], timeout: 30 },
   es: {
     index: '',
     pattern: 'none',

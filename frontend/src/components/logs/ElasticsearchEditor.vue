@@ -15,8 +15,8 @@
           <a-space>
             <a-button type="primary" @click="run">运行查询</a-button>
             <a-button>添加查询</a-button>
-            <a-button>查询历史记录</a-button>
-            <a-button>查询检查器</a-button>
+            <a-button @click="$emit('history')">查询历史记录</a-button>
+            <a-button @click="emitInspect">查询检查器</a-button>
           </a-space>
         </div>
       </a-tab-pane>
@@ -29,7 +29,7 @@
 <script setup>
 import { ref } from 'vue'
 
-const emit = defineEmits(['run'])
+const emit = defineEmits(['run', 'history', 'inspect'])
 const tab = ref('logs')
 const lucene = ref('')
 const limit = ref(500)
@@ -40,6 +40,10 @@ function run() {
     query: lucene.value, 
     lineLimit: limit.value 
   }) 
+}
+
+function emitInspect() {
+  emit('inspect', lucene.value)
 }
 </script>
 

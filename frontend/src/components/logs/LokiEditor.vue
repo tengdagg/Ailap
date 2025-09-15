@@ -3,19 +3,18 @@
     <a-tabs v-model:active-key="mode" type="line" size="large">
       <a-tab-pane key="builder" title="Builder">
         <a-space direction="vertical" fill>
-          <a-space>
-            <a-button @click="addLabelFilter">新增标签过滤</a-button>
-            <a-button @click="addOperation">+ Operations</a-button>
-            <a-switch v-model="explain" size="small">解释查询</a-switch>
-          </a-space>
-
           <div>
             <div style="margin-bottom:6px">Label filters</div>
-            <div v-for="(f,i) in form.labelFilters" :key="i" style="display:flex; gap:8px; margin-bottom:8px">
-              <a-select v-model="f.label" style="width:140px" placeholder="Select label" allow-search :options="labelOptions" :loading="loadingLabels" @focus="ensureLabels" />
-              <a-select v-model="f.op" :options="ops" style="width:80px" />
-              <a-select v-model="valuesDraft[i]" multiple allow-search style="min-width:220px" placeholder="Select value" :options="valueOptions[i]" :loading="loadingValues[i]" @focus="ensureLabelValues(i)" @change="commitValues(i)" />
-              <a-button @click="removeLabelFilter(i)" size="mini">-</a-button>
+            <div v-for="(f,i) in form.labelFilters" :key="i" style="display:flex; gap:8px; margin-bottom:8px; align-items:center">
+              <a-select v-model="f.label" style="width:180px" placeholder="Select label" allow-search :options="labelOptions" :loading="loadingLabels" @focus="ensureLabels" />
+              <a-select v-model="f.op" :options="ops" style="width:60px" />
+              <a-select v-model="valuesDraft[i]" multiple allow-search style="width:160px" placeholder="Select value" :options="valueOptions[i]" :loading="loadingValues[i]" @focus="ensureLabelValues(i)" @change="commitValues(i)" />
+              
+              <!-- + 号用于添加新行，只在最后一行显示 -->
+              <a-button v-if="i === form.labelFilters.length - 1" @click="addLabelFilter" size="mini" type="outline" style="color: #1890ff; border-color: #1890ff; width: 28px; height: 28px; padding: 0;">+</a-button>
+              
+              <!-- X 号用于删除行，当有多行时显示 -->
+              <a-button v-if="form.labelFilters.length > 1" @click="removeLabelFilter(i)" size="mini" type="outline" status="danger" style="color: #f53f3f; border-color: #f53f3f; width: 28px; height: 28px; padding: 0;">×</a-button>
             </div>
           </div>
 
@@ -23,7 +22,6 @@
             <div style="margin-bottom:6px">Line contains</div>
             <div style="display:flex; gap:8px; align-items:center">
               <a-input v-model="form.contains" placeholder="Text to find" style="max-width:360px" />
-              <a-button size="mini" @click="addContains">+</a-button>
             </div>
           </div>
 
@@ -77,7 +75,6 @@ const emit = defineEmits(['run','history','inspect'])
 const props = defineProps({ datasourceId: { type: [String, Number], default: '' } })
 
 const mode = ref('builder')
-const explain = ref(false)
 const code = ref('')
 
 const ops = [
@@ -88,7 +85,7 @@ const ops = [
 ]
 
 const form = reactive({
-  labelFilters: [],
+  labelFilters: [{ label: '', op: '=', values: [] }], // 默认有一行
   contains: '',
   type: 'Range',
   lineLimit: 1000,
@@ -145,11 +142,9 @@ function commitValues(idx) {
 
 function addLabelFilter() { form.labelFilters.push({ label: '', op: '=', values: [] }) }
 function removeLabelFilter(i) { form.labelFilters.splice(i, 1) }
-function addOperation() {}
-function addContains() {}
 
 function run() {
-  emit('run', { mode: 'builder', builder: { ...form }, explain: explain.value })
+  emit('run', { mode: 'builder', builder: { ...form }, explain: false })
 }
 function runCode() {
   emit('run', { mode: 'code', query: code.value, type: form.type, lineLimit: form.lineLimit })

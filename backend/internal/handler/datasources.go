@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -121,7 +123,7 @@ func (h *DataSourcesHandler) Test(c *gin.Context) {
 	}
 	typ := stringOr(raw["type"])
 	endpoint := stringOr(raw["endpoint"])
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := createTestHTTPClient(raw, 5*time.Second)
 	reqURL := endpoint
 	if typ == "loki" {
 		if !hasPath(endpoint) {
@@ -158,6 +160,65 @@ func (h *DataSourcesHandler) Test(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"code": 1, "message": resp.Status, "data": gin.H{"body": string(body)}})
+}
+
+// createTestHTTPClient creates an HTTP client with TLS configuration for testing
+func createTestHTTPClient(cfg map[string]interface{}, timeout time.Duration) *http.Client {
+	transport := &http.Transport{}
+
+	// TLS configuration
+	if tlsCfg := getTestTLSConfig(cfg); tlsCfg != nil {
+		transport.TLSClientConfig = tlsCfg
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+	}
+}
+
+// getTestTLSConfig extracts TLS configuration from datasource config for testing
+func getTestTLSConfig(cfg map[string]interface{}) *tls.Config {
+	if cfg == nil {
+		return nil
+	}
+
+	tlsData, ok := cfg["tls"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	tlsConfig := &tls.Config{}
+
+	// Skip certificate verification
+	if skipVerify, ok := tlsData["skipVerify"].(bool); ok && skipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	// Server name for TLS
+	if serverName, ok := tlsData["serverName"].(string); ok && serverName != "" {
+		tlsConfig.ServerName = serverName
+	}
+
+	// CA certificate for self-signed certificates
+	if caCert, ok := tlsData["caCert"].(string); ok && caCert != "" {
+		caCertPool := x509.NewCertPool()
+		if caCertPool.AppendCertsFromPEM([]byte(caCert)) {
+			tlsConfig.RootCAs = caCertPool
+		}
+	}
+
+	// Client certificate authentication
+	if clientCert, ok := tlsData["clientCert"].(string); ok && clientCert != "" {
+		if clientKey, ok := tlsData["clientKey"].(string); ok && clientKey != "" {
+			cert, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
+			if err == nil {
+				tlsConfig.Certificates = []tls.Certificate{cert}
+			}
+		}
+	}
+
+	return tlsConfig
 }
 
 func stringOr(v interface{}) string {
