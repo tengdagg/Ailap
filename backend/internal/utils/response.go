@@ -16,3 +16,5 @@ func Error(ctx *gin.Context, httpStatus int, code int, message string) {
 	ctx.JSON(httpStatus, APIResponse{Code: code, Message: message})
 }
 
+
+

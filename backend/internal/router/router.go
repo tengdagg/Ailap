@@ -34,6 +34,9 @@ func New() *gin.Engine {
 		logs := api.Group("/logs")
 		logs.GET("/query", logsHandler.Query)
 		logs.GET("/suggestions", logsHandler.Suggestions)
+		logs.GET("/label-values", logsHandler.LabelValues)
+		logs.GET("/history", logsHandler.History)
+		logs.GET("/inspect", logsHandler.Inspect)
 
 		models := api.Group("/models")
 		models.GET("", modelsHandler.List)

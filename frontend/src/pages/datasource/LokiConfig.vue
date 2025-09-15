@@ -97,11 +97,12 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import PageContainer from '@/components/PageContainer.vue'
-import { createDataSource, testConnectionPayload } from '@/api/datasources'
+import { createDataSource, testConnectionPayload, getDataSourceById, updateDataSource } from '@/api/datasources'
 import { Message } from '@arco-design/web-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 
 const urlPattern = /^(https?:)\/\//i
 const selfSignedVisible = ref(false)
@@ -151,7 +152,14 @@ async function onTest() {
 async function onSave() {
   saving.value = true
   try {
-    const { data } = await createDataSource(form)
+    const id = route.query.id
+    let resp
+    if (id) {
+      resp = await updateDataSource(id, form)
+    } else {
+      resp = await createDataSource(form)
+    }
+    const { data } = resp
     if (data?.code === 0) {
       Message.success('已保存')
       router.replace({ path: '/datasources', query: { ts: Date.now().toString() } })
@@ -161,5 +169,18 @@ async function onSave() {
   } finally {
     saving.value = false
   }
+}
+
+// edit mode: load existing
+if (route.query.id) {
+  ;(async () => {
+    const existing = await getDataSourceById(route.query.id)
+    if (existing && existing.config) {
+      try { Object.assign(form, JSON.parse(existing.config)) } catch (_) {}
+      form.name = existing.name || form.name
+      form.type = existing.type || form.type
+      form.endpoint = existing.endpoint || form.endpoint
+    }
+  })()
 }
 </script>

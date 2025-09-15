@@ -37,3 +37,5 @@ func (s *AuthService) Login(username, password string) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return t.SignedString([]byte(cfg.JWTSecret))
 }
+
+

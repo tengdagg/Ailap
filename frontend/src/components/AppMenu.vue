@@ -17,3 +17,5 @@ const selected = computed(() => '/' + (route.path.split('/')[1] || 'dashboard'))
 
 function onClick(key) { router.push(key) }
 </script>
+
+

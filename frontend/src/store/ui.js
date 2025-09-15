@@ -20,3 +20,5 @@ export const useUiStore = defineStore('ui', {
     setSiderCollapsed(v) { this.siderCollapsed = v },
   },
 })
+
+

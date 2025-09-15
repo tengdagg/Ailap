@@ -21,11 +21,12 @@
 </template>
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import PageContainer from '@/components/PageContainer.vue'
 import { listDataSources, updateDataSource, deleteDataSource, testConnection } from '@/api/datasources'
 
 const route = useRoute()
+const router = useRouter()
 
 const loading = ref(false)
 const rows = ref([])
@@ -60,11 +61,31 @@ async function fetchList() {
 }
 
 function edit(record) {
-  // TODO: route to edit detail by type
+  if (record.type === 'loki') {
+    router.push(`/datasources/new/loki?id=${record.id}`)
+    return
+  }
+  if (record.type === 'elasticsearch') {
+    router.push(`/datasources/new/elasticsearch?id=${record.id}`)
+  }
 }
 
 async function remove(record) { await deleteDataSource(record.id); await fetchList() }
-async function test(record) { await testConnection(record.id) }
+async function test(record) {
+  loading.value = true
+  try {
+    const { data } = await testConnection(record.id)
+    if (data?.code === 0) {
+      // 使用全局消息提示
+      // eslint-disable-next-line no-alert
+      console.log('连接成功', data?.data)
+    } else {
+      console.error('连接失败', data?.message)
+    }
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(fetchList)
 watch(() => route.query.ts, () => fetchList())
