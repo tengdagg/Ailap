@@ -1,11 +1,6 @@
 <template>
   <div class="page-container">
-    <a-page-header :title="title" :subtitle="subtitle">
-      <template #extra>
-        <slot name="extra" />
-      </template>
-    </a-page-header>
-    <a-card :bordered="false" style="margin-top:12px">
+    <a-card :bordered="false">
       <slot />
     </a-card>
   </div>

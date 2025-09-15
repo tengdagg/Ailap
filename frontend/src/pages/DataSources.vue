@@ -1,8 +1,8 @@
 <template>
-  <page-container title="数据源管理" subtitle="维护日志/数据系统连接">
-    <template #extra>
+  <page-container>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
       <a-button type="primary" @click="$router.push('/datasources/new')">新建数据源</a-button>
-    </template>
+    </div>
     <a-alert v-if="errorMsg" type="error" :content="errorMsg" style="margin-bottom:8px" />
 
     <a-table v-if="rows.length" :key="listKey" :data="rows" :columns="columns" :loading="loading" row-key="id" :bordered="true" :pagination="false">

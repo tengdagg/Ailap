@@ -9,11 +9,13 @@ type LogEntry struct {
 }
 
 // LogQueryHistory stores executed query history
-// Minimal model for demo purposes
 type LogQueryHistory struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Engine    string    `json:"engine"`
-	Mode      string    `json:"mode"`
-	Query     string    `json:"query"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	Engine     string    `json:"engine"`
+	Mode       string    `json:"mode"`
+	Query      string    `json:"query"`
+	Note       string    `json:"note"`
+	IsFavorite bool      `gorm:"default:false" json:"isFavorite"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }

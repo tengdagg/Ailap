@@ -1,16 +1,9 @@
 <template>
-  <page-container title="Loki 配置" subtitle="配置 Loki 数据源连接信息">
+  <page-container>
     <a-form :model="form" :rules="rules" layout="vertical" style="max-width:900px">
-      <a-grid :cols="24" :col-gap="16">
-        <a-grid-item :span="18">
-          <a-form-item label="名称" field="name" required>
-            <a-input v-model="form.name" />
-          </a-form-item>
-        </a-grid-item>
-        <a-grid-item :span="6" style="display:flex;align-items:flex-end">
-          <a-switch v-model="form.isDefault">默认</a-switch>
-        </a-grid-item>
-      </a-grid>
+      <a-form-item label="名称" field="name" required>
+        <a-input v-model="form.name" />
+      </a-form-item>
 
       <a-divider>连接</a-divider>
       <a-form-item label="URL *" field="endpoint" required validate-trigger="blur">
@@ -67,11 +60,15 @@
       </a-modal>
 
       <a-divider>高级设置</a-divider>
-      <a-form-item label="允许的 Cookie"><a-input-tag v-model="form.http.allowedCookies" placeholder="回车新增" /></a-form-item>
-      <a-form-item label="超时时间 (秒)"><a-input-number v-model="form.http.timeout" placeholder="单位：秒" :min="0" /></a-form-item>
-
-      <a-form-item label="告警"><a-switch v-model="form.alerting.manageInUI">在 UI 中管理告警规则</a-switch></a-form-item>
-      <a-form-item label="查询最大行数"><a-input-number v-model="form.query.maxLines" :min="1" /></a-form-item>
+      <a-form-item label="允许的 Cookie" help="用于身份验证的Cookie，每行一个">
+        <a-input-tag v-model="form.http.allowedCookies" placeholder="回车新增" />
+      </a-form-item>
+      <a-form-item label="超时时间 (秒)" help="HTTP请求超时时间，默认30秒">
+        <a-input-number v-model="form.http.timeout" placeholder="30" :min="1" :max="300" />
+      </a-form-item>
+      <a-form-item label="查询最大行数" help="单次查询返回的最大日志行数">
+        <a-input-number v-model="form.query.maxLines" :min="1" :max="10000" />
+      </a-form-item>
 
       <a-divider>派生字段（Derived fields）</a-divider>
       <div>
@@ -114,13 +111,11 @@ const saving = ref(false)
 const form = reactive({
   name: 'loki',
   type: 'loki',
-  isDefault: false,
   endpoint: '',
   authType: 'none',
   username: '', password: '', token: '',
   tls: { addSelfSigned: false, clientAuth: false, skipVerify: false, caCert: '', serverName: '', clientCert: '', clientKey: '' },
-  http: { allowedCookies: [], timeout: undefined },
-  alerting: { manageInUI: true },
+  http: { allowedCookies: [], timeout: 30 },
   query: { maxLines: 1000 },
   derivedFields: [],
 })

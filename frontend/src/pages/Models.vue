@@ -1,8 +1,8 @@
 <template>
-  <page-container title="模型管理" subtitle="维护模型元数据与版本">
-    <template #extra>
+  <page-container>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
       <a-button type="primary" @click="openCreate">新建模型</a-button>
-    </template>
+    </div>
     <a-table :data="rows" :loading="loading" row-key="id">
       <a-table-column title="名称" data-index="name" />
       <a-table-column title="版本" data-index="version" />

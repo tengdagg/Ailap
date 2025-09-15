@@ -36,6 +36,9 @@ func New() *gin.Engine {
 		logs.GET("/suggestions", logsHandler.Suggestions)
 		logs.GET("/label-values", logsHandler.LabelValues)
 		logs.GET("/history", logsHandler.History)
+		logs.POST("/history/:id/favorite", logsHandler.ToggleFavorite)
+		logs.PUT("/history/:id/note", logsHandler.UpdateNote)
+		logs.DELETE("/history/:id", logsHandler.DeleteHistory)
 		logs.GET("/inspect", logsHandler.Inspect)
 
 		models := api.Group("/models")

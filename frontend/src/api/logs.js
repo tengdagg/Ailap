@@ -12,8 +12,20 @@ export function labelValues(params) {
   return request.get('/logs/label-values', { params })
 }
 
-export function history() {
-  return request.get('/logs/history')
+export function history(type = 'recent') {
+  return request.get('/logs/history', { params: { type } })
+}
+
+export function toggleFavorite(id) {
+  return request.post(`/logs/history/${id}/favorite`)
+}
+
+export function updateNote(id, note) {
+  return request.put(`/logs/history/${id}/note`, { note })
+}
+
+export function deleteHistory(id) {
+  return request.delete(`/logs/history/${id}`)
 }
 
 export function inspect(params) {
