@@ -16,3 +16,5 @@ export function deleteModel(id) {
   return request.delete(`/models/${id}`)
 }
 
+
+

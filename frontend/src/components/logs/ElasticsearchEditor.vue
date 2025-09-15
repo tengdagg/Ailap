@@ -34,5 +34,13 @@ const tab = ref('logs')
 const lucene = ref('')
 const limit = ref(500)
 
-function run() { emit('run', { lucene: lucene.value, limit: limit.value }) }
+function run() { 
+  emit('run', { 
+    mode: 'code', 
+    query: lucene.value, 
+    lineLimit: limit.value 
+  }) 
+}
 </script>
+
+

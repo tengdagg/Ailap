@@ -97,9 +97,27 @@ func (h *DataSourcesHandler) Delete(c *gin.Context) {
 
 func (h *DataSourcesHandler) Test(c *gin.Context) {
 	var raw map[string]interface{}
-	if err := c.ShouldBindJSON(&raw); err != nil {
-		c.JSON(400, gin.H{"code": 400, "message": "bad request"})
-		return
+	// allow empty body for id-based testing from list
+	_ = c.ShouldBindJSON(&raw)
+	if raw == nil {
+		raw = map[string]interface{}{}
+	}
+	// when called as /datasources/:id/test and critical fields missing, load from DB
+	if id := c.Param("id"); id != "" {
+		if stringOr(raw["type"]) == "" || stringOr(raw["endpoint"]) == "" {
+			var d model.DataSource
+			if err := database.GetDB().First(&d, "id = ?", id).Error; err == nil {
+				var cfg map[string]interface{}
+				_ = json.Unmarshal([]byte(d.Config), &cfg)
+				if cfg == nil {
+					cfg = map[string]interface{}{}
+				}
+				cfg["name"] = d.Name
+				cfg["type"] = d.Type
+				cfg["endpoint"] = d.Endpoint
+				raw = cfg
+			}
+		}
 	}
 	typ := stringOr(raw["type"])
 	endpoint := stringOr(raw["endpoint"])
