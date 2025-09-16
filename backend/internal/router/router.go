@@ -29,6 +29,9 @@ func New() *gin.Engine {
 		auth.POST("/logout", authHandler.Logout)
 		auth.GET("/profile", authHandler.Profile)
 
+		// Test datasource connection (no auth required)
+		api.POST("/datasources/test", dsHandler.Test)
+
 		api.Use(middleware.AuthRequired())
 
 		logs := api.Group("/logs")
@@ -52,8 +55,7 @@ func New() *gin.Engine {
 		ds.POST("", dsHandler.Create)
 		ds.PUT(":id", dsHandler.Update)
 		ds.DELETE(":id", dsHandler.Delete)
-		ds.POST(":id/test", dsHandler.Test) // optional test by id not used yet
-		ds.POST("/test", dsHandler.Test)    // test arbitrary payload before save
+		ds.POST(":id/test", dsHandler.Test) // optional test by id (requires auth)
 	}
 
 	return r
