@@ -17,11 +17,8 @@
     <loki-editor v-if="datasource==='loki'" :datasource-id="selectedLokiId" @run="onRunLoki" @history="openHistory" @inspect="openInspector" />
     <elasticsearch-editor v-else @run="onRunES" @history="openHistory" @inspect="openInspector" />
 
-    <div v-if="rows.length > 0" style="margin-top:12px">
+    <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
       <div style="margin-bottom:8px; color: #666;">查询结果: {{ rows.length }} 条记录</div>
-      
-      
-      <!-- 使用原生表格替代 Arco 表格 -->
       <div style="border: 1px solid #e5e6eb; border-radius: 4px; overflow: hidden;">
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
           <thead style="background: #f7f8fa; border-bottom: 1px solid #e5e6eb;">
@@ -48,8 +45,6 @@
           </tbody>
         </table>
       </div>
-      
-      <!-- 分页控制 -->
       <div v-if="rows.length > pageSize" style="margin-top: 16px; text-align: center;">
         <a-space>
           <a-button @click="prevPage" :disabled="currentPage === 1" size="small">上一页</a-button>
@@ -58,6 +53,26 @@
           </span>
           <a-button @click="nextPage" :disabled="currentPage === totalPages" size="small">下一页</a-button>
         </a-space>
+      </div>
+    </div>
+
+    <div v-else-if="rows.length > 0 && viewMode==='raw'" style="margin-top:12px">
+      <div style="margin-bottom:8px; color: #666;">Raw Data: {{ rows.length }} 条记录</div>
+      <div style="border: 1px solid #e5e6eb; border-radius: 4px; overflow: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead style="background: #f7f8fa; border-bottom: 1px solid #e5e6eb;">
+            <tr>
+              <th v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; text-align: left; font-weight: 500; border-right: 1px solid #e5e6eb; white-space: nowrap;">{{ col }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(doc, ridx) in paginatedRows" :key="ridx" :style="{ backgroundColor: ridx % 2 === 0 ? '#fff' : '#fafafa' }" style="border-bottom: 1px solid #f0f0f0;">
+              <td v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; border-right: 1px solid #f0f0f0; font-family: monospace;">
+                {{ formatRawCell(doc.__raw, col) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
     <div v-else-if="!loading" style="margin-top:12px; padding:20px; text-align:center; color:#999; border:1px dashed #d9d9d9; border-radius:4px">
@@ -184,6 +199,10 @@
       <a-typography-paragraph copyable>
         {{ inspectUrl }}
       </a-typography-paragraph>
+      <div style="margin-top: 8px; color: #666;">Body</div>
+      <pre style="white-space: pre; background: #f7f8fa; padding: 12px; border-radius: 4px; border: 1px solid #e5e6eb; max-height: 300px; overflow: auto;">
+{{ inspectBody }}
+      </pre>
     </a-modal>
   </page-container>
 </template>
@@ -222,6 +241,7 @@ const allHistoryItems = ref([]) // 存储所有历史记录
 const searchKeyword = ref('')
 const inspectVisible = ref(false)
 const inspectUrl = ref('')
+const inspectBody = ref('')
 
 // 备注编辑相关
 const noteModalVisible = ref(false)
@@ -230,6 +250,8 @@ const currentEditItem = ref(null)
 
 const loading = ref(false)
 const rows = ref([])
+const viewMode = ref('logs') // 'logs' | 'raw'
+const rawColumns = ref([])
 
 // 分页相关
 const currentPage = ref(1)
@@ -259,29 +281,36 @@ function nextPage() {
 function formatTimestamp(timestamp) {
   if (!timestamp) return '-'
   try {
-    // Handle both string and number timestamps
-    let ts = timestamp
-    if (typeof ts === 'string') {
-      ts = parseInt(ts)
+    // Numeric timestamps (number or numeric string)
+    if (typeof timestamp === 'number' || (typeof timestamp === 'string' && /^\d+$/.test(timestamp))) {
+      let ts = typeof timestamp === 'number' ? timestamp : parseInt(timestamp)
+      // Convert nanoseconds to milliseconds if needed
+      if (ts > 1e15) {
+        ts = Math.floor(ts / 1e6)
+      }
+      const dateNum = new Date(ts)
+      if (!isNaN(dateNum.getTime())) {
+        return dateNum.toLocaleString('zh-CN', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        })
+      }
     }
-    // Convert nanoseconds to milliseconds if needed
-    if (ts > 1e15) {
-      ts = ts / 1e6
+
+    // ISO8601 string timestamps (e.g., 2025-09-16T14:29:15.609+08:00)
+    if (typeof timestamp === 'string') {
+      const dateIso = new Date(timestamp)
+      if (!isNaN(dateIso.getTime())) {
+        return dateIso.toLocaleString('zh-CN', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        })
+      }
     }
-    const date = new Date(ts)
-    if (isNaN(date.getTime())) {
-      return String(timestamp) // fallback to raw value
-    }
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  } catch (e) {
-    console.error('Error formatting timestamp:', timestamp, e)
+
+    // Fallback
+    return String(timestamp)
+  } catch (_) {
     return String(timestamp)
   }
 }
@@ -290,6 +319,7 @@ async function onRunLoki(payload) {
   await runQuery({ engine: 'loki', payload })
 }
 async function onRunES(payload) {
+  viewMode.value = payload?.mode === 'raw' ? 'raw' : 'logs'
   await runQuery({ engine: 'elasticsearch', payload })
 }
 
@@ -322,7 +352,19 @@ async function runQuery(params) {
     
     const { data } = await queryLogs({ engine: params.engine, datasourceId: dsId, start, end, step: step.value, direction: direction.value, ...params.payload })
     console.log('API Response:', data)
-    rows.value = data?.data?.items || []
+    const items = data?.data?.items || []
+    if (viewMode.value === 'raw') {
+      // Expect backend sends each row with __raw being full _source
+      // Fallback: build rawColumns from keys present
+      const cols = new Set()
+      items.forEach(it => {
+        if (it.__raw && typeof it.__raw === 'object') {
+          Object.keys(it.__raw).forEach(k => cols.add(k))
+        }
+      })
+      rawColumns.value = Array.from(cols)
+    }
+    rows.value = items
     currentPage.value = 1 // 重置到第一页
     console.log('Rows after setting:', rows.value.length, 'items, first few:', rows.value.slice(0, 2))
   } catch (error) {
@@ -531,6 +573,7 @@ async function openInspector(queryStr = '') {
   if (queryStr) params.query = queryStr
   const { data } = await inspect(params)
   inspectUrl.value = data?.data?.url || ''
+  inspectBody.value = data?.data?.body || ''
 }
 
 onMounted(async () => {
@@ -559,5 +602,12 @@ onMounted(async () => {
     console.error('Failed to load datasources:', e)
   }
 })
+
+function formatRawCell(raw, key) {
+  const val = raw && raw[key]
+  if (val == null) return ''
+  if (typeof val === 'object') return JSON.stringify(val)
+  return String(val)
+}
 </script>
 

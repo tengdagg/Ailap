@@ -22,6 +22,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Message } from '@arco-design/web-vue'
 import PageContainer from '@/components/PageContainer.vue'
 import { listDataSources, updateDataSource, deleteDataSource, testConnection } from '@/api/datasources'
 
@@ -76,12 +77,12 @@ async function test(record) {
   try {
     const { data } = await testConnection(record.id)
     if (data?.code === 0) {
-      // 使用全局消息提示
-      // eslint-disable-next-line no-alert
-      console.log('连接成功', data?.data)
+      Message.success('连接成功')
     } else {
-      console.error('连接失败', data?.message)
+      Message.error(data?.message || '连接失败')
     }
+  } catch (error) {
+    Message.error(error?.response?.data?.message || error?.message || '连接失败')
   } finally {
     loading.value = false
   }

@@ -156,10 +156,16 @@ func (h *LogsHandler) Query(c *gin.Context) {
 			timeField = tf
 		}
 	}
-	messageField := "message"
+	messageField := "_source"
 	if logsCfg, ok := cfg["logs"].(map[string]interface{}); ok {
 		if mf, ok := logsCfg["messageField"].(string); ok && mf != "" {
 			messageField = mf
+		}
+	}
+	levelField := ""
+	if logsCfg, ok := cfg["logs"].(map[string]interface{}); ok {
+		if lf, ok := logsCfg["levelField"].(string); ok && lf != "" {
+			levelField = lf
 		}
 	}
 	indexPath := ""
@@ -191,22 +197,41 @@ func (h *LogsHandler) Query(c *gin.Context) {
 		size = v
 	}
 
+	// Build must conditions dynamically
+	mustConditions := []interface{}{}
+	if query == "" || query == "*" {
+		mustConditions = append(mustConditions, map[string]interface{}{"match_all": map[string]interface{}{}})
+	} else {
+		mustConditions = append(mustConditions, map[string]interface{}{"query_string": map[string]interface{}{"query": query}})
+	}
+	mustConditions = append(mustConditions, map[string]interface{}{"range": map[string]interface{}{timeField: map[string]interface{}{"gte": startMs, "lte": endMs, "format": "epoch_millis"}}})
+
 	bodyJSON := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"must": []interface{}{
-					map[string]interface{}{"query_string": map[string]interface{}{"query": query}},
-					map[string]interface{}{"range": map[string]interface{}{timeField: map[string]interface{}{"gte": startMs, "lte": endMs, "format": "epoch_millis"}}},
-				},
+				"must": mustConditions,
 			},
 		},
 		"sort": []interface{}{map[string]interface{}{timeField: map[string]interface{}{"order": "desc"}}},
 		"size": size,
 	}
+
+	// Add maxShardRequests if configured
+	// Removed: max_concurrent_shard_requests is not a valid field in _search body for Elasticsearch
+	// Keep bodyJSON as-is
 	payload, _ := json.Marshal(bodyJSON)
 	searchURL := endpoint + indexPath + "/_search"
 	req, _ := http.NewRequest(http.MethodPost, searchURL, strings.NewReader(string(payload)))
 	req.Header.Set("Content-Type", "application/json")
+
+	// Add X-Pack specific headers if enabled
+	if es, ok := cfg["es"].(map[string]interface{}); ok {
+		if xpack, ok := es["xpack"].(bool); ok && xpack {
+			// X-Pack is enabled, add specific headers if needed
+			req.Header.Set("X-Elastic-Product", "Elasticsearch")
+		}
+	}
+
 	applyAuthHeaders(req, cfg)
 	client := createHTTPClient(cfg, 15*time.Second)
 	resp, err := client.Do(req)
@@ -225,7 +250,7 @@ func (h *LogsHandler) Query(c *gin.Context) {
 		return
 	}
 
-	items := flattenElasticsearchToRows(body, timeField, messageField)
+	items := flattenElasticsearchToRows(body, timeField, messageField, levelField)
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": items}})
 }
 
@@ -491,13 +516,22 @@ func (h *LogsHandler) Inspect(c *gin.Context) {
 	bodyJSON := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"must": []interface{}{
-					map[string]interface{}{"query_string": map[string]interface{}{"query": q}},
-					map[string]interface{}{"range": map[string]interface{}{timeField: map[string]interface{}{"gte": startMs, "lte": endMs, "format": "epoch_millis"}}},
-				},
+				"must": func() []interface{} {
+					conds := make([]interface{}, 0, 2)
+					if q == "" || q == "*" {
+						conds = append(conds, map[string]interface{}{"match_all": map[string]interface{}{}})
+					} else {
+						conds = append(conds, map[string]interface{}{"query_string": map[string]interface{}{"query": q}})
+					}
+					conds = append(conds, map[string]interface{}{"range": map[string]interface{}{timeField: map[string]interface{}{"gte": startMs, "lte": endMs, "format": "epoch_millis"}}})
+					return conds
+				}(),
 			},
 		},
 	}
+
+	// Add maxShardRequests if configured
+	// Removed: max_concurrent_shard_requests is not a valid field in _search body
 	b, _ := json.MarshalIndent(bodyJSON, "", "  ")
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"url": urlStr, "body": string(b)}})
 }
@@ -745,10 +779,44 @@ func flattenLokiToRows(respBody []byte) []map[string]interface{} {
 	return rows
 }
 
-func flattenElasticsearchToRows(respBody []byte, timeField, messageField string) []map[string]interface{} {
+// getNestedField extracts nested field values from a map using dot notation
+func getNestedField(data map[string]interface{}, fieldPath string) interface{} {
+	if fieldPath == "" {
+		return nil
+	}
+
+	// Split field path by dots
+	parts := strings.Split(fieldPath, ".")
+	current := data
+
+	for i, part := range parts {
+		if val, exists := current[part]; exists {
+			// If this is the last part, return the value
+			if i == len(parts)-1 {
+				return val
+			}
+			// If not the last part, continue traversing
+			if nextMap, ok := val.(map[string]interface{}); ok {
+				current = nextMap
+			} else {
+				// Can't traverse further
+				return nil
+			}
+		} else {
+			// Field doesn't exist
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func flattenElasticsearchToRows(respBody []byte, timeField, messageField, levelField string) []map[string]interface{} {
 	rows := make([]map[string]interface{}, 0)
+
 	var obj map[string]interface{}
 	_ = json.Unmarshal(respBody, &obj)
+
 	hitsWrap, ok := obj["hits"].(map[string]interface{})
 	if !ok {
 		return rows
@@ -757,10 +825,127 @@ func flattenElasticsearchToRows(respBody []byte, timeField, messageField string)
 	if !ok {
 		return rows
 	}
+
 	for _, h := range hits {
 		hm, _ := h.(map[string]interface{})
 		source, _ := hm["_source"].(map[string]interface{})
-		rows = append(rows, map[string]interface{}{"timestamp": source[timeField], "level": "", "message": source[messageField]})
+
+		// timestamp
+		var timestamp interface{}
+		if timeField != "" {
+			if val, exists := source[timeField]; exists {
+				timestamp = val
+			} else {
+				timestamp = getNestedField(source, timeField)
+			}
+		}
+
+		// message
+		var message interface{}
+		if messageField == "_source" {
+			if b, err := json.Marshal(source); err == nil {
+				message = string(b)
+			} else {
+				message = fmt.Sprintf("%v", source)
+			}
+		} else if messageField != "" {
+			if val, exists := source[messageField]; exists {
+				message = val
+			} else {
+				message = getNestedField(source, messageField)
+				if message == nil {
+					for _, f := range []string{"message", "log.message", "msg", "text"} {
+						if val := getNestedField(source, f); val != nil {
+							message = val
+							break
+						}
+					}
+					if message == nil {
+						if b, err := json.Marshal(source); err == nil {
+							message = string(b)
+						} else {
+							message = fmt.Sprintf("%v", source)
+						}
+					}
+				}
+			}
+		}
+
+		// level
+		var level interface{} = ""
+		if levelField != "" {
+			if val := getNestedField(source, levelField); val != nil {
+				level = val
+			} else {
+				for _, f := range []string{"level", "log.level", "severity", "priority"} {
+					if val := getNestedField(source, f); val != nil {
+						level = val
+						break
+					}
+				}
+			}
+		} else {
+			for _, f := range []string{"level", "log.level", "severity", "priority"} {
+				if val := getNestedField(source, f); val != nil {
+					level = val
+					break
+				}
+			}
+		}
+
+		// Create raw data with all ES metadata and source fields
+		rawData := make(map[string]interface{})
+
+		// Add ES metadata fields
+		if id, exists := hm["_id"]; exists {
+			rawData["_id"] = id
+		}
+		if index, exists := hm["_index"]; exists {
+			rawData["_index"] = index
+		}
+		if docType, exists := hm["_type"]; exists {
+			rawData["_type"] = docType
+		}
+		if score, exists := hm["_score"]; exists {
+			rawData["_score"] = score
+		}
+		if sort, exists := hm["sort"]; exists {
+			rawData["sort"] = sort
+		}
+		if highlight, exists := hm["highlight"]; exists {
+			rawData["highlight"] = highlight
+		}
+
+		// Add all source fields with flattened keys
+		flattenMap(source, "", rawData)
+
+		rows = append(rows, map[string]interface{}{
+			"timestamp": timestamp,
+			"level":     level,
+			"message":   message,
+			"__raw":     rawData, // Now includes both metadata and flattened source
+		})
 	}
+
 	return rows
+}
+
+// flattenMap recursively flattens nested maps with dot notation keys
+func flattenMap(data map[string]interface{}, prefix string, result map[string]interface{}) {
+	for key, value := range data {
+		var newKey string
+		if prefix == "" {
+			newKey = key
+		} else {
+			newKey = prefix + "." + key
+		}
+
+		if nestedMap, ok := value.(map[string]interface{}); ok {
+			// Recursively flatten nested maps
+			flattenMap(nestedMap, newKey, result)
+		} else {
+			// Add the flattened key-value pair
+			result[newKey] = value
+		}
+	}
 }
