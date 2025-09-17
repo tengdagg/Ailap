@@ -5,7 +5,7 @@ Monorepo for a Vue 3 + Vite frontend and Go + Gin backend.
 ## Prerequisites
 - Node.js 18+
 - Go 1.21+
-- PostgreSQL or MySQL (optional initially)
+- Sqlite (optional initially)
 
 ## Frontend
 ```bash
