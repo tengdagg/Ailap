@@ -2,10 +2,10 @@
   <page-container>
     <div v-if="!editingId && !creating && !preset" style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px;">
       <div />
-      <a-button type="primary" @click="openNew">新建模型</a-button>
+      <a-button type="primary" @click="openNew">添加模型</a-button>
     </div>
 
-    <a-grid v-if="!editingId && !creating && !preset" :cols="24" :col-gap="16" :row-gap="16">
+    <a-grid v-if="!editingId && !creating && !preset" :cols="24" :col-gap="18" :row-gap="16">
       <a-grid-item v-for="m in models" :key="m.id" :span="6">
         <a-card hoverable @click="startEdit(m)" style="cursor:pointer">
           <template #title>
@@ -40,9 +40,9 @@
       </div>
       <a-grid :cols="24" :col-gap="12" :row-gap="12">
         <a-grid-item v-for="item in presets" :key="item.provider" :span="8">
-          <a-card hoverable @click="choosePreset(item)" style="cursor:pointer">
+          <a-card hoverable @click="choosePreset(item)" style="cursor:pointer; padding:10px;">
             <div style="display:flex;align-items:center;gap:8px">
-              <img :src="getLogo(item.provider)" alt="logo" style="width:28px;height:28px;object-fit:contain" />
+              <img :src="getLogo(item.provider)" alt="logo" style="width:45px;height:45px;object-fit:contain" />
               <div>
                 <div style="font-weight:600">{{ item.name }}</div>
                 <div style="color:var(--color-text-3);font-size:12px">{{ item.desc }}</div>

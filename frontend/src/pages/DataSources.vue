@@ -1,21 +1,30 @@
 <template>
   <page-container>
     <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-      <a-button type="primary" @click="$router.push('/datasources/new')">新建数据源</a-button>
+      <a-button type="primary" @click="$router.push('/datasources/new')">添加数据源</a-button>
     </div>
     <a-alert v-if="errorMsg" type="error" :content="errorMsg" style="margin-bottom:8px" />
 
-    <a-table v-if="rows.length" :key="listKey" :data="rows" :columns="columns" :loading="loading" row-key="id" :bordered="true" :pagination="false">
-      <template #actions="{ record }">
-        <a-space>
-          <a-button size="mini" @click="edit(record)">编辑</a-button>
-          <a-button size="mini" @click="test(record)">测试连接</a-button>
-          <a-popconfirm content="确认删除？" @ok="remove(record)">
-            <a-button size="mini" status="danger">删除</a-button>
-          </a-popconfirm>
-        </a-space>
-      </template>
-    </a-table>
+    <div v-if="rows.length">
+      <div v-for="item in rows" :key="item.id" class="ds-item">
+        <div class="ds-left">
+          <img :src="getTypeLogo(item.type)" alt="logo" class="ds-logo" />
+          <div class="ds-meta">
+            <div class="ds-name">{{ item.name }}</div>
+            <div class="ds-sub">{{ item.type }} ｜ {{ item.endpoint }}</div>
+          </div>
+        </div>
+        <div class="ds-actions">
+          <a-space>
+            <a-button size="mini" @click="edit(item)">编辑</a-button>
+            <a-button size="mini" @click="test(item)">测试连接</a-button>
+            <a-popconfirm content="确认删除？" @ok="remove(item)">
+              <a-button size="mini" status="danger">删除</a-button>
+            </a-popconfirm>
+          </a-space>
+        </div>
+      </div>
+    </div>
     <a-empty v-else description="暂无数据" />
   </page-container>
 </template>
@@ -32,14 +41,14 @@ const router = useRouter()
 const loading = ref(false)
 const rows = ref([])
 const errorMsg = ref('')
-const listKey = computed(() => (route.query.ts || '') + ':' + rows.value.length)
 
-const columns = [
-  { title: '名称', dataIndex: 'name' },
-  { title: '类型', dataIndex: 'type', width: 140 },
-  { title: '地址', dataIndex: 'endpoint' },
-  { title: '操作', slotName: 'actions', width: 260 },
-]
+function getTypeLogo(type) {
+  try {
+    return new URL(`../assets/${type}.png`, import.meta.url).href
+  } catch (_) {
+    return new URL(`../assets/logo.png`, import.meta.url).href
+  }
+}
 
 async function fetchList() {
   loading.value = true
@@ -91,4 +100,22 @@ async function test(record) {
 onMounted(fetchList)
 watch(() => route.query.ts, () => fetchList())
 </script>
+
+<style scoped>
+.ds-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px;
+  border: 1px solid var(--color-border-2);
+  border-radius: 8px;
+  background: var(--color-bg-2);
+  margin-bottom: 12px;
+}
+.ds-left { display: flex; align-items: center; gap: 12px; }
+.ds-logo { width: 45px; height: 45px; object-fit: contain; }
+.ds-meta { display: flex; flex-direction: column; }
+.ds-name { font-weight: 600; }
+.ds-sub { color: var(--color-text-3); font-size: 12px; }
+</style>
 

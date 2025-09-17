@@ -14,5 +14,8 @@ body {
   padding: 16px;
 }
 
+.arco-card {
+  border-radius: 8px !important;
+}
 
 

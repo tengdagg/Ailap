@@ -24,7 +24,7 @@ const router = createRouter({
         { path: 'logs', component: Logs, meta: { title: '日志', pageSubtitle: '日志查询和分析工具' } },
         { path: 'models', component: Models, meta: { title: '模型', pageSubtitle: 'AI 模型配置和管理' } },
         { path: 'datasources', component: DataSources, meta: { title: '数据源', pageSubtitle: '维护日志/数据系统连接' } },
-        { path: 'datasources/new', component: NewDataSource, meta: { title: '新建数据源', pageSubtitle: '选择数据源类型' } },
+        { path: 'datasources/new', component: NewDataSource, meta: { title: '添加数据源', pageSubtitle: '选择数据源类型' } },
         { path: 'datasources/new/loki', component: LokiConfig, meta: { title: 'Loki 配置', pageSubtitle: '配置 Loki 数据源连接信息' } },
         { path: 'datasources/new/elasticsearch', component: ElasticsearchConfig, meta: { title: 'Elasticsearch 配置', pageSubtitle: '配置 Elasticsearch 数据源连接信息' } },
       ],
