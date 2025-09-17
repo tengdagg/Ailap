@@ -1,11 +1,11 @@
 <template>
   <page-container>
-    <div v-if="!editingId && !creating" style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px;">
+    <div v-if="!editingId && !creating && !preset" style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px;">
       <div />
       <a-button type="primary" @click="openNew">新建模型</a-button>
     </div>
 
-    <a-grid v-if="!editingId && !creating" :cols="24" :col-gap="16" :row-gap="16">
+    <a-grid v-if="!editingId && !creating && !preset" :cols="24" :col-gap="16" :row-gap="16">
       <a-grid-item v-for="m in models" :key="m.id" :span="6">
         <a-card hoverable @click="startEdit(m)" style="cursor:pointer">
           <template #title>
@@ -32,7 +32,7 @@
       
     </a-grid>
 
-    <div v-if="creating && !editingId">
+    <div v-if="creating && !editingId && !preset">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <a-button type="text" @click="cancelCreate">返回列表</a-button>
         <span style="font-weight:600">选择模型类型</span>
