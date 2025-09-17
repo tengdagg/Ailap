@@ -16,6 +16,12 @@ export function deleteModel(id) {
   return request.delete(`/models/${id}`)
 }
 
+export function testModel(data) {
+  return request.post('/models/test', data)
+}
+
+
+
 
 
 
