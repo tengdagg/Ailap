@@ -47,6 +47,7 @@ func New() *gin.Engine {
 		models := api.Group("/models")
 		models.GET("", modelsHandler.List)
 		models.POST("", modelsHandler.Create)
+		models.POST("/test", modelsHandler.Test)
 		models.PUT(":id", modelsHandler.Update)
 		models.DELETE(":id", modelsHandler.Delete)
 
