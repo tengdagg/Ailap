@@ -15,6 +15,8 @@ type MLModel struct {
 	Temperature float64   `json:"temperature"`
 	MaxTokens   int       `json:"maxTokens"`
 	Roles       string    `gorm:"type:text" json:"roles"`
+	Enabled     bool      `gorm:"default:true" json:"enabled"`
+	IsDefault   bool      `gorm:"default:false" json:"isDefault"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }

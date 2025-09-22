@@ -20,6 +20,14 @@ export function testModel(data) {
   return request.post('/models/test', data)
 }
 
+export function toggleModelEnabled(id, enabled) {
+  return request.post(`/models/${id}/enabled`, { enabled })
+}
+
+export function setModelDefault(id) {
+  return request.post(`/models/${id}/default`)
+}
+
 
 
 

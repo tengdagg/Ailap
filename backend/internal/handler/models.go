@@ -31,6 +31,10 @@ func (h *ModelsHandler) Create(c *gin.Context) {
 		c.JSON(400, gin.H{"code": 400, "message": "bad request"})
 		return
 	}
+	// ensure single default
+	if m.IsDefault {
+		database.GetDB().Model(&model.MLModel{}).Where("is_default = ?", true).Update("is_default", false)
+	}
 	database.GetDB().Create(&m)
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"id": m.ID}})
 }
@@ -42,6 +46,9 @@ func (h *ModelsHandler) Update(c *gin.Context) {
 		return
 	}
 	id := c.Param("id")
+	if m.IsDefault {
+		database.GetDB().Model(&model.MLModel{}).Where("is_default = ?", true).Update("is_default", false)
+	}
 	database.GetDB().Model(&model.MLModel{}).Where("id = ?", id).Updates(m)
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
 }
@@ -49,6 +56,30 @@ func (h *ModelsHandler) Update(c *gin.Context) {
 func (h *ModelsHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 	database.GetDB().Delete(&model.MLModel{}, "id = ?", id)
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
+}
+
+// ToggleEnabled updates enabled status
+func (h *ModelsHandler) ToggleEnabled(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(400, gin.H{"code": 400, "message": "bad request"})
+		return
+	}
+	database.GetDB().Model(&model.MLModel{}).Where("id = ?", id).Update("enabled", body.Enabled)
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
+}
+
+// SetDefault sets a model as default (ensures single default)
+func (h *ModelsHandler) SetDefault(c *gin.Context) {
+	id := c.Param("id")
+	// reset others
+	database.GetDB().Model(&model.MLModel{}).Where("is_default = ?", true).Update("is_default", false)
+	// set this one
+	database.GetDB().Model(&model.MLModel{}).Where("id = ?", id).Update("is_default", true)
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
 }
 

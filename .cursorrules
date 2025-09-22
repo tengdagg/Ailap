@@ -1,0 +1,106 @@
+## Project
+- **Stack**: Go 1.21 (Gin, Gorm, Zap) + Vue 3 (Vite, Pinia, Vue Router, Arco Design Vue).
+- **Folders**: `backend/` (Go API), `frontend/` (Vue app).
+- **API base**: `/api` (proxied by Vite during dev).
+
+## Run & Dev
+- **Backend**:
+  - `cd backend && go mod tidy && go run ./cmd`
+  - Port: `8080` (configurable via `AILAP_HTTP_PORT`)
+- **Frontend**:
+  - `cd frontend && npm install && npm run dev`
+  - Dev server: `5173`, proxies `/api` to backend
+
+## Configuration
+- **Env prefix**: `AILAP_` (Viper). Available keys:
+  - `AILAP_HTTP_PORT` (default 8080)
+  - `AILAP_JWT_SECRET` (default dev secret)
+  - `AILAP_DB_DRIVER`, `AILAP_DB_DSN` (empty ⇒ SQLite `data/ailap.db`)
+  - `AILAP_READ_TIMEOUT`, `AILAP_WRITE_TIMEOUT` (seconds)
+  - `AILAP_ALLOW_ORIGINS` (default `[*]`)
+  - Seed admin on first run: `AILAP_ADMIN_USER`/`AILAP_ADMIN_PASS` (defaults `admin`/`admin123`)
+
+## Backend Guidelines (Go/Gin)
+- **Router**: See `backend/internal/router/router.go`. Public endpoints:
+  - `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/profile`
+  - `POST /api/datasources/test` (connection test)
+  - All other `logs/`, `models/`, `datasources/` routes are behind `AuthRequired` (JWT bearer).
+- **Auth**: Expect header `Authorization: Bearer <jwt>`; middleware `middleware.AuthRequired()` validates against `config.Get().JWTSecret`.
+- **Responses**: Keep shape `{ code, message, data? }`.
+  - Prefer helpers in `backend/internal/utils/response.go`: `Success(ctx, data)`, `Error(ctx, httpStatus, code, message)` for new handlers.
+  - Use HTTP 200 for success with `code: 0`; on errors use appropriate HTTP status with non-zero `code`.
+- **Logging**: Use Zap via `utils.GetLogger()`; request log middleware `middleware.RequestLogger()` already attached.
+- **Database**: Default SQLite at `data/ailap.db`; migrations via Gorm in `backend/internal/database/database.go`.
+  - Models are in `backend/internal/model/`.
+- **Add endpoints**: Group under `/api`; apply `AuthRequired` to protected groups; keep names RESTful.
+
+## Frontend Guidelines (Vue 3 + Arco)
+- **Alias**: Use `@` for `frontend/src` (from `frontend/vite.config.js`).
+- **State**: Pinia stores
+  - `useAuthStore`: `token`, `user`, `isAuthenticated`, `setToken`, `clear` (persists token to `localStorage`).
+  - `useUiStore`: `theme` (`light`/`dark`), `siderCollapsed`, `toggleTheme()`, `initTheme()`.
+- **HTTP**: Use `frontend/src/api/request.js` (Axios instance)
+  - Base URL `/api`, 15s timeout, attaches `Authorization` from auth store.
+  - On 401/403: clears auth, shows Arco `Message.error`, redirects to `/login`.
+  - Keep this contract; do not bypass interceptors.
+- **Routing**: `frontend/src/router/index.js`
+  - Public: `/login` (meta `{ public: true }`).
+  - App routes nested under `DefaultLayout` and guarded by `beforeEach` using `auth.isAuthenticated`.
+  - Set `meta.title` and `meta.pageSubtitle` for new pages.
+- **Layout & UI**: Use `frontend/src/layouts/DefaultLayout.vue` and `frontend/src/components/PageContainer.vue`.
+  - Continue with Arco components; match existing look & feel.
+  - Keep theme toggle integrated with `useUiStore` and Arco dark class `arco-theme-dark` on `body`.
+
+## File/Folder Conventions
+- **Frontend**
+  - Views under `frontend/src/pages/` (nest by domain: `pages/datasource/*`, `pages/model/*`).
+  - Reusable UI under `frontend/src/components/`.
+  - API modules under `frontend/src/api/` (one per domain; return Axios promises and rely on shared `request`).
+- **Backend**
+  - Handlers in `backend/internal/handler/`, services in `backend/internal/service/`, models in `backend/internal/model/`.
+  - Middleware in `backend/internal/middleware/`.
+
+## Style & Naming
+- **Go**
+  - Explicit, readable names; avoid abbreviations.
+  - Short-circuit errors; return early; avoid deep nesting.
+  - Do not log or return sensitive data.
+- **Vue/JS**
+  - Use composition API with clear variable names.
+  - Keep components small and cohesive; prefer props/slots over tight coupling.
+  - Centralize network code in `frontend/src/api`; do not call Axios directly from components.
+
+## Testing & Build Checks
+- **Backend**: `cd backend && go build ./cmd` should succeed.
+- **Frontend**: `cd frontend && npm run build` should pass.
+- If edits touch both ends, verify integration by running both dev servers and testing through the UI.
+
+## Security & Auth
+- Never hardcode JWT secrets; use `AILAP_JWT_SECRET`.
+- Keep response messages non-sensitive. On auth failures, return 401 with `{ code: 401, message: "unauthorized" }` style.
+- Rely on frontend interceptor for session expiry UX.
+
+## Arco Design UX (Keep Consistent)
+- Use Arco `a-*` components for layout, forms, tables, dialogs, messages.
+- Maintain the global layout header/breadcrumb/sidebar. For new pages, wrap content with `PageContainer` and set route `meta` for titles/subtitles.
+
+## Do
+- Add routes under `/api` and wire to handlers/services/models.
+- Use `utils.Success/Error` for consistent responses.
+- Use `request.js` for API calls; surface errors via Arco `Message`.
+- Keep `@` path alias; import stores/components accordingly.
+
+## Don't
+- Do not change the API response envelope (`code/message/data`).
+- Do not bypass the Axios interceptor by using raw `axios` instances.
+- Do not add protected routes outside the `AuthRequired` group.
+- Do not leak secrets or PII in logs.
+
+## Quick References
+- Backend entry: `backend/cmd/main.go`; server: `backend/internal/server/server.go`.
+- Router: `backend/internal/router/router.go`.
+- Auth middleware: `backend/internal/middleware/auth.go`.
+- Axios instance: `frontend/src/api/request.js`.
+- Router: `frontend/src/router/index.js`.
+- Layout: `frontend/src/layouts/DefaultLayout.vue`.
+

@@ -7,29 +7,32 @@
 
     <a-grid v-if="!editingId && !creating && !preset" :cols="24" :col-gap="18" :row-gap="16">
       <a-grid-item v-for="m in models" :key="m.id" :span="6">
-        <a-card hoverable @click="startEdit(m)" style="cursor:pointer">
+        <a-card hoverable style="position:relative">
           <template #title>
             <div style="display:flex;align-items:center;gap:8px">
               <img :src="getLogo(m.provider)" alt="logo" style="width:24px;height:24px;object-fit:contain" />
               <span>{{ m.name }}</span>
+              <a-tag v-if="m.isDefault" color="arcoblue" size="small">默认</a-tag>
             </div>
           </template>
-          <div style="color:var(--color-text-3)">
+          <div style="color:var(--color-text-3); min-height:52px">
             <div>供应商：{{ m.provider }}</div>
             <div>模型：{{ m.model }}</div>
           </div>
-          <template #extra>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
             <a-space>
-              <a-button size="mini" @click.stop="startEdit(m)">编辑</a-button>
+              <a-switch size="small" :model-value="!!m.enabled" @change="(v)=>onToggleEnabled(m, v)">启用</a-switch>
+              <a-button size="mini" type="outline" @click="setDefault(m)" :disabled="m.isDefault">设为默认</a-button>
+            </a-space>
+            <a-space>
+              <a-button size="mini" @click="startEdit(m)">编辑</a-button>
               <a-popconfirm content="确认删除？" @ok="remove(m)">
-                <a-button size="mini" status="danger" @click.stop>删除</a-button>
+                <a-button size="mini" status="danger">删除</a-button>
               </a-popconfirm>
             </a-space>
-          </template>
+          </div>
         </a-card>
       </a-grid-item>
-
-      
     </a-grid>
 
     <div v-if="creating && !editingId && !preset">
@@ -65,7 +68,7 @@ import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import PageContainer from '@/components/PageContainer.vue'
-import { listModels, createModel, deleteModel } from '@/api/models'
+import { listModels, deleteModel, toggleModelEnabled, setModelDefault } from '@/api/models'
 import ModelConfigInline from '@/pages/model/ModelConfig.vue'
 
 const router = useRouter()
@@ -110,6 +113,18 @@ async function remove(m) {
   const { data } = await deleteModel(m.id)
   if (data?.code === 0) { Message.success('已删除'); fetchList() }
   else { Message.error(data?.message || '删除失败') }
+}
+
+async function onToggleEnabled(m, val) {
+  const { data } = await toggleModelEnabled(m.id, !!val)
+  if (data?.code === 0) { m.enabled = !!val; Message.success(val ? '已启用' : '已停用') }
+  else { Message.error(data?.message || '操作失败') }
+}
+
+async function setDefault(m) {
+  const { data } = await setModelDefault(m.id)
+  if (data?.code === 0) { Message.success('已设为默认'); fetchList() }
+  else { Message.error(data?.message || '操作失败') }
 }
 
 onMounted(fetchList)
