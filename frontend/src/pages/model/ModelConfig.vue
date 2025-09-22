@@ -41,6 +41,16 @@
             <a-input-number v-model="form.maxTokens" :min="1" :max="32000" />
           </a-form-item>
         </a-grid-item>
+        <a-grid-item :span="12">
+          <a-form-item label="是否启用">
+            <a-switch v-model="form.enabled" />
+          </a-form-item>
+        </a-grid-item>
+        <a-grid-item :span="12">
+          <a-form-item label="设为默认">
+            <a-switch v-model="form.isDefault" />
+          </a-form-item>
+        </a-grid-item>
       </a-grid>
 
       <a-divider>角色定义</a-divider>
@@ -79,7 +89,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['back', 'saved'])
 
-const form = ref({ name: '', provider: 'openai', model: '', apiBase: '', apiKey: '', temperature: 0.7, maxTokens: 2048 })
+const form = ref({ name: '', provider: 'openai', model: '', apiBase: '', apiKey: '', temperature: 0.7, maxTokens: 2048, enabled: true, isDefault: false })
 const roles = ref([])
 const testing = ref(false)
 const saving = ref(false)
@@ -133,7 +143,7 @@ async function load() {
     const items = data?.data?.items || []
     const m = items.find(it => String(it.id) === String(props.modelId))
     if (m) {
-      form.value = { name: m.name, provider: m.provider, model: m.model, apiBase: m.apiBase, apiKey: m.apiKey, temperature: m.temperature, maxTokens: m.maxTokens }
+      form.value = { name: m.name, provider: m.provider, model: m.model, apiBase: m.apiBase, apiKey: m.apiKey, temperature: m.temperature, maxTokens: m.maxTokens, enabled: !!m.enabled, isDefault: !!m.isDefault }
       try { roles.value = JSON.parse(m.roles || '[]') } catch { roles.value = [] }
     }
   } else if (props.preset) {
@@ -145,6 +155,8 @@ async function load() {
       apiKey: '',
       temperature: 0.7,
       maxTokens: 2048,
+      enabled: true,
+      isDefault: false,
     }
     roles.value = []
   }

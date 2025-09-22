@@ -49,6 +49,8 @@ func New() *gin.Engine {
 		models.POST("", modelsHandler.Create)
 		models.POST("/test", modelsHandler.Test)
 		models.PUT(":id", modelsHandler.Update)
+		models.POST(":id/enabled", modelsHandler.ToggleEnabled)
+		models.POST(":id/default", modelsHandler.SetDefault)
 		models.DELETE(":id", modelsHandler.Delete)
 
 		ds := api.Group("/datasources")
