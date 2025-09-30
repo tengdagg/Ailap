@@ -121,10 +121,10 @@ func (h *LogsHandler) Query(c *gin.Context) {
 
 		req, _ := http.NewRequest(http.MethodGet, reqURL, nil)
 		applyAuthHeaders(req, cfg)
-		client := createHTTPClient(cfg, 15*time.Second)
+		client := createHTTPClient(cfg, 60*time.Second)
 		resp, err := client.Do(req)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "message": err.Error(), "data": gin.H{"items": []interface{}{}}})
+			c.JSON(http.StatusGatewayTimeout, gin.H{"code": 504, "message": err.Error()})
 			return
 		}
 		defer resp.Body.Close()
@@ -233,10 +233,10 @@ func (h *LogsHandler) Query(c *gin.Context) {
 	}
 
 	applyAuthHeaders(req, cfg)
-	client := createHTTPClient(cfg, 15*time.Second)
+	client := createHTTPClient(cfg, 60*time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "message": err.Error(), "data": gin.H{"items": []interface{}{}}})
+		c.JSON(http.StatusGatewayTimeout, gin.H{"code": 504, "message": err.Error()})
 		return
 	}
 	defer resp.Body.Close()

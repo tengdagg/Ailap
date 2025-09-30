@@ -204,6 +204,9 @@
 {{ inspectBody }}
       </pre>
     </a-modal>
+
+    <!-- 智能分析悬浮按钮与对话框 -->
+    <log-analysis-chat v-if="rows.length > 0" :logs="rows" :initial-range="{ start: lastRangeStartMs, end: lastRangeEndMs }" />
   </page-container>
 </template>
 <script setup>
@@ -215,6 +218,7 @@ import { queryLogs, history as apiHistory, inspect, toggleFavorite, updateNote, 
 import { listDataSources } from '@/api/datasources'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch } from '@arco-design/web-vue/es/icon'
+import LogAnalysisChat from '@/components/LogAnalysisChat.vue'
 
 const datasource = ref('loki')
 const dsOptions = [ { label: 'Loki', value: 'loki' }, { label: 'Elasticsearch', value: 'elasticsearch' } ]
@@ -233,6 +237,8 @@ const rangeOptions = [
 const range = ref('1h')
 const step = ref('60s')
 const direction = ref('BACKWARD')
+const lastRangeStartMs = ref(0)
+const lastRangeEndMs = ref(0)
 
 const historyVisible = ref(false)
 const historyTab = ref('recent')
@@ -329,13 +335,15 @@ function computeTimeRange() {
   const m = range.value.endsWith('m') ? map.m : map.h
   const num = parseInt(range.value)
   const startMs = now - num * m
-  return { start: String(startMs * 1e6), end: String(now * 1e6) }
+  return { start: String(startMs * 1e6), end: String(now * 1e6), startMs, nowMs: now }
 }
 
 async function runQuery(params) {
   loading.value = true
   try {
-    const { start, end } = computeTimeRange()
+    const { start, end, startMs, nowMs } = computeTimeRange()
+    lastRangeStartMs.value = startMs
+    lastRangeEndMs.value = nowMs
     const dsId = params.engine === 'loki' 
       ? (selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || '') 
       : (selectedEsId.value || localStorage.getItem('last_es_ds_id') || '')

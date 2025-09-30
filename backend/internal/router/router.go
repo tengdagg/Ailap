@@ -20,6 +20,7 @@ func New() *gin.Engine {
 	authHandler := handler.NewAuthHandler()
 	logsHandler := handler.NewLogsHandler()
 	modelsHandler := handler.NewModelsHandler()
+	aiHandler := handler.NewAIHandler()
 	dsHandler := handler.NewDataSourcesHandler()
 
 	api := r.Group("/api")
@@ -60,6 +61,8 @@ func New() *gin.Engine {
 		ds.PUT(":id", dsHandler.Update)
 		ds.DELETE(":id", dsHandler.Delete)
 		ds.POST(":id/test", dsHandler.Test) // optional test by id (requires auth)
+		ai := api.Group("/ai")
+		ai.POST("/analyze-logs", aiHandler.AnalyzeLogs)
 	}
 
 	return r
