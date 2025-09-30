@@ -33,6 +33,7 @@ func New() *gin.Engine {
 		api.POST("/datasources/test", dsHandler.Test)
 
 		api.Use(middleware.AuthRequired())
+		auth.POST("/change-password", authHandler.ChangePassword)
 
 		logs := api.Group("/logs")
 		logs.GET("/query", logsHandler.Query)

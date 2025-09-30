@@ -12,10 +12,18 @@ export const useUiStore = defineStore('ui', {
     toggleTheme() {
       this.theme = this.theme === 'dark' ? 'light' : 'dark'
       localStorage.setItem('theme', this.theme)
-      document.body.classList.toggle('arco-theme-dark', this.theme === 'dark')
+      const isDark = this.theme === 'dark'
+      document.body.classList.toggle('arco-theme-dark', isDark)
+      document.documentElement.classList.toggle('arco-theme-dark', isDark)
+      document.body.setAttribute('arco-theme', isDark ? 'dark' : 'light')
+      document.documentElement.setAttribute('arco-theme', isDark ? 'dark' : 'light')
     },
     initTheme() {
-      document.body.classList.toggle('arco-theme-dark', this.theme === 'dark')
+      const isDark = this.theme === 'dark'
+      document.body.classList.toggle('arco-theme-dark', isDark)
+      document.documentElement.classList.toggle('arco-theme-dark', isDark)
+      document.body.setAttribute('arco-theme', isDark ? 'dark' : 'light')
+      document.documentElement.setAttribute('arco-theme', isDark ? 'dark' : 'light')
     },
     setSiderCollapsed(v) { this.siderCollapsed = v },
   },

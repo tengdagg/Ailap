@@ -38,15 +38,18 @@ func (s *AuthService) Login(username, password string) (string, error) {
 	return t.SignedString([]byte(cfg.JWTSecret))
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
+// ChangePassword verifies the old password and updates to the new password for the given user
+func (s *AuthService) ChangePassword(userID interface{}, oldPassword, newPassword string) error {
+	var u model.User
+	if err := s.db.First(&u, userID).Error; err != nil {
+		return err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(oldPassword)); err != nil {
+		return errors.New("old password incorrect")
+	}
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	return s.db.Model(&u).Update("password", string(hashed)).Error
+}

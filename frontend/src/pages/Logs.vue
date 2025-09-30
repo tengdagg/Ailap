@@ -18,24 +18,24 @@
     <elasticsearch-editor v-else @run="onRunES" @history="openHistory" @inspect="openInspector" />
 
     <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
-      <div style="margin-bottom:8px; color: #666;">查询结果: {{ rows.length }} 条记录</div>
-      <div style="border: 1px solid #e5e6eb; border-radius: 4px; overflow: hidden;">
+      <div style="margin-bottom:8px; color: var(--color-text-3);">查询结果: {{ rows.length }} 条记录</div>
+      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: hidden;">
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-          <thead style="background: #f7f8fa; border-bottom: 1px solid #e5e6eb;">
+          <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2);">
             <tr>
-              <th style="padding: 12px; text-align: left; font-weight: 500; width: 220px; border-right: 1px solid #e5e6eb;">时间</th>
-              <th style="padding: 12px; text-align: left; font-weight: 500; width: 100px; border-right: 1px solid #e5e6eb;">级别</th>
+              <th style="padding: 12px; text-align: left; font-weight: 500; width: 220px; border-right: 1px solid var(--color-border-2);">时间</th>
+              <th style="padding: 12px; text-align: left; font-weight: 500; width: 100px; border-right: 1px solid var(--color-border-2);">级别</th>
               <th style="padding: 12px; text-align: left; font-weight: 500;">内容</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(record, index) in paginatedRows" :key="index" 
-                :style="{ backgroundColor: index % 2 === 0 ? '#fff' : '#fafafa' }"
-                style="border-bottom: 1px solid #f0f0f0;">
-              <td style="padding: 12px; border-right: 1px solid #f0f0f0; font-family: monospace; font-size: 12px;">
+                :style="{ backgroundColor: index % 2 === 0 ? 'var(--color-bg-1)' : 'var(--color-fill-1)' }"
+                style="border-bottom: 1px solid var(--color-border-2);">
+              <td style="padding: 12px; border-right: 1px solid var(--color-border-2); font-family: monospace; font-size: 12px;">
                 {{ formatTimestamp(record.timestamp) }}
               </td>
-              <td style="padding: 12px; border-right: 1px solid #f0f0f0;">
+              <td style="padding: 12px; border-right: 1px solid var(--color-border-2);">
                 {{ record.level || '-' }}
               </td>
               <td style="padding: 12px; word-break: break-all; max-width: 600px;">
@@ -57,17 +57,17 @@
     </div>
 
     <div v-else-if="rows.length > 0 && viewMode==='raw'" style="margin-top:12px">
-      <div style="margin-bottom:8px; color: #666;">Raw Data: {{ rows.length }} 条记录</div>
-      <div style="border: 1px solid #e5e6eb; border-radius: 4px; overflow: auto;">
+      <div style="margin-bottom:8px; color: var(--color-text-3);">Raw Data: {{ rows.length }} 条记录</div>
+      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <thead style="background: #f7f8fa; border-bottom: 1px solid #e5e6eb;">
+          <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2);">
             <tr>
-              <th v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; text-align: left; font-weight: 500; border-right: 1px solid #e5e6eb; white-space: nowrap;">{{ col }}</th>
+              <th v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; text-align: left; font-weight: 500; border-right: 1px solid var(--color-border-2); white-space: nowrap;">{{ col }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(doc, ridx) in paginatedRows" :key="ridx" :style="{ backgroundColor: ridx % 2 === 0 ? '#fff' : '#fafafa' }" style="border-bottom: 1px solid #f0f0f0;">
-              <td v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; border-right: 1px solid #f0f0f0; font-family: monospace;">
+            <tr v-for="(doc, ridx) in paginatedRows" :key="ridx" :style="{ backgroundColor: ridx % 2 === 0 ? 'var(--color-bg-1)' : 'var(--color-fill-1)' }" style="border-bottom: 1px solid var(--color-border-2);">
+              <td v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
                 {{ formatRawCell(doc.__raw, col) }}
               </td>
             </tr>
@@ -75,7 +75,7 @@
         </table>
       </div>
     </div>
-    <div v-else-if="!loading" style="margin-top:12px; padding:20px; text-align:center; color:#999; border:1px dashed #d9d9d9; border-radius:4px">
+    <div v-else-if="!loading" style="margin-top:12px; padding:20px; text-align:center; color:var(--color-text-3); border:1px dashed var(--color-border-2); border-radius:4px">
       暂无查询结果，请点击"运行查询"执行查询
     </div>
 
@@ -102,16 +102,16 @@
         </a-tabs>
       </div>
 
-      <div v-if="historyItems.length === 0" style="text-align: center; padding: 40px; color: #999;">
+      <div v-if="historyItems.length === 0" style="text-align: center; padding: 40px; color: var(--color-text-3);">
         {{ historyTab === 'favorite' ? '暂无收藏的查询' : '暂无查询历史' }}
       </div>
       
       <div v-else style="max-height: 280px; overflow-y: auto;">
         <div v-for="item in historyItems" :key="item.id" 
-             style="border: 1px solid #e5e6eb; border-radius: 6px; padding: 12px; margin-bottom: 8px; background: #fafafa;">
+             style="border: 1px solid var(--color-border-2); border-radius: 6px; padding: 12px; margin-bottom: 8px; background: var(--color-fill-1);">
           
           <!-- 时间和操作按钮在同一行 -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; color: #666;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--color-text-3);">
             <div style="display: flex; gap: 12px; align-items: center;">
               <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
               <a-tag :color="item.engine === 'loki' ? 'blue' : 'green'" size="small">{{ item.engine }}</a-tag>
@@ -135,7 +135,7 @@
                   size="mini" 
                   type="text" 
                   @click="confirmDelete(item)"
-                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: #f53f3f;"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--color-danger-6);"
                 >
                   <icon-delete />
                 </a-button>
@@ -151,7 +151,7 @@
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    color: item.isFavorite ? '#faad14' : '#8c8c8c'
+                    color: item.isFavorite ? 'var(--color-warning-6)' : 'var(--color-text-3)'
                   }"
                   @click="toggleQueryFavorite(item)"
                 >
@@ -164,7 +164,7 @@
                   size="mini" 
                   type="text" 
                   @click="executeQuery(item)"
-                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: #1890ff;"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--color-primary-6);"
                 >
                   <icon-send />
                 </a-button>
@@ -173,11 +173,11 @@
           </div>
           
           <!-- 备注显示 -->
-          <div v-if="item.note" style="margin-bottom: 8px; font-size: 12px; color: #666; font-style: italic;">
+          <div v-if="item.note" style="margin-bottom: 8px; font-size: 12px; color: var(--color-text-3); font-style: italic;">
             💬 {{ item.note }}
           </div>
           
-          <div style="font-family: monospace; font-size: 13px; word-break: break-all; background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #e9ecef;">
+          <div style="font-family: monospace; font-size: 13px; word-break: break-all; background: var(--color-fill-2); padding: 8px; border-radius: 4px; border: 1px solid var(--color-border-2);">
             {{ item.query || '-' }}
           </div>
         </div>
@@ -199,8 +199,8 @@
       <a-typography-paragraph copyable>
         {{ inspectUrl }}
       </a-typography-paragraph>
-      <div style="margin-top: 8px; color: #666;">Body</div>
-      <pre style="white-space: pre; background: #f7f8fa; padding: 12px; border-radius: 4px; border: 1px solid #e5e6eb; max-height: 300px; overflow: auto;">
+      <div style="margin-top: 8px; color: var(--color-text-3);">Body</div>
+      <pre style="white-space: pre; background: var(--color-fill-2); padding: 12px; border-radius: 4px; border: 1px solid var(--color-border-2); max-height: 300px; overflow: auto;">
 {{ inspectBody }}
       </pre>
     </a-modal>

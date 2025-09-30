@@ -12,6 +12,10 @@ export function profile() {
   return request.get('/auth/profile')
 }
 
+export function changePassword(payload) {
+  return request.post('/auth/change-password', payload)
+}
+
 
 
 
