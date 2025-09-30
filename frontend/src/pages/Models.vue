@@ -1,8 +1,10 @@
 <template>
   <page-container>
-    <div v-if="!editingId && !creating && !preset" style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px;">
-      <div />
-      <a-button type="primary" @click="openNew">添加模型</a-button>
+    <div v-if="!editingId && !creating && !preset" style="display:flex; justify-content:flex-start; align-items:center; margin-bottom: 16px;">
+      <a-button type="primary" @click="openNew">
+        <template #icon><icon-plus /></template>
+        添加模型
+      </a-button>
     </div>
 
     <a-grid v-if="!editingId && !creating && !preset" :cols="24" :col-gap="18" :row-gap="16">
