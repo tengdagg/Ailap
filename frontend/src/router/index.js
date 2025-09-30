@@ -10,6 +10,7 @@ const DataSources = () => import('@/pages/DataSources.vue')
 const NewDataSource = () => import('@/pages/datasource/NewDataSource.vue')
 const LokiConfig = () => import('@/pages/datasource/LokiConfig.vue')
 const ElasticsearchConfig = () => import('@/pages/datasource/ElasticsearchConfig.vue')
+const Profile = () => import('@/pages/Profile.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -27,6 +28,7 @@ const router = createRouter({
         { path: 'datasources/new', component: NewDataSource, meta: { title: '添加数据源', pageSubtitle: '选择数据源类型' } },
         { path: 'datasources/new/loki', component: LokiConfig, meta: { title: 'Loki 配置', pageSubtitle: '配置 Loki 数据源连接信息' } },
         { path: 'datasources/new/elasticsearch', component: ElasticsearchConfig, meta: { title: 'Elasticsearch 配置', pageSubtitle: '配置 Elasticsearch 数据源连接信息' } },
+        { path: 'profile', component: Profile, meta: { title: '个人中心', pageSubtitle: '账户资料与安全设置' } },
       ],
     },
   ],

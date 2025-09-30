@@ -2,7 +2,7 @@
   <a-layout style="height:100%">
     <a-layout-header class="app-header">
       <div class="logo">
-        <img src="@/assets/logo.png" alt="AILAP" class="logo-img" />
+        <img src="@/assets/logo.png" alt="AILAP" :class="['logo-img', { 'logo-dark': isDark }]" />
       </div>
       <div class="header-content">
         <a-breadcrumb class="crumb">
@@ -14,8 +14,10 @@
       </div>
       <div class="header-actions">
         <a-space>
-          <span>深色</span>
-          <a-switch :model-value="isDark" @change="toggleTheme" />
+          <a-button type="text" class="theme-btn" @click="toggleTheme">
+            <icon-moon v-if="!isDark" />
+            <icon-sun v-else />
+          </a-button>
           <a-dropdown>
             <a-avatar style="cursor:pointer">A</a-avatar>
             <template #content>
@@ -42,6 +44,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
 import AppMenu from '@/components/AppMenu.vue'
+import { IconSun, IconMoon } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 const route = useRoute()
@@ -58,7 +61,7 @@ const pageSubtitle = computed(() => route.meta?.pageSubtitle || '')
 function toggleTheme() { ui.toggleTheme() }
 function onCollapse(v) { ui.setSiderCollapsed(v) }
 
-function goProfile() { router.push('/dashboard') }
+function goProfile() { router.push('/profile') }
 function onLogout() { auth.clear(); router.replace('/login') }
 </script>
 
@@ -70,24 +73,20 @@ function onLogout() { auth.clear(); router.replace('/login') }
   gap: 8px;
   height: 100%;
   width: 200px;
-  justify-content: space-around;
+  justify-content: center;
 }
 .logo-img { 
   height: 32px; 
   width: auto; 
   object-fit: contain; 
 }
-.logo-text {
-  font-weight: 700; 
-  font-size: 18px; 
-  letter-spacing: 0.5px;
-  color: var(--color-text-1);
-  line-height: 1;
-}
+.logo-dark { filter: brightness(0) invert(1); }
 .header-content { display: flex; align-items: center; gap: 16px; flex: 1; margin-left:8px; }
 .page-info { display: flex; align-items: center; gap: 8px; }
 .page-title { font-weight: 600; font-size: 16px; color: var(--color-text-1); }
 .page-subtitle { font-size: 14px; color: var(--color-text-3); }
-.header-actions { margin-left:auto; }
+.header-actions { margin-left:auto; padding-right:12px; }
 .app-content { padding:16px; overflow:auto; background: var(--color-bg-1); }
+.theme-btn { padding: 0; line-height: 1; color: var(--color-text-1); }
+.theme-btn :deep(svg) { font-size: 18px; }
 </style>
