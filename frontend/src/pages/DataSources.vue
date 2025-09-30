@@ -1,6 +1,6 @@
 <template>
   <page-container>
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+    <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
       <a-button type="primary" @click="$router.push('/datasources/new')">添加数据源</a-button>
     </div>
     <a-alert v-if="errorMsg" type="error" :content="errorMsg" style="margin-bottom:8px" />
