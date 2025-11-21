@@ -6,7 +6,7 @@
           <div>
             <div style="margin-bottom:6px">Label filters</div>
             <div v-for="(f,i) in form.labelFilters" :key="i" style="display:flex; gap:8px; margin-bottom:8px; align-items:center">
-              <a-select v-model="f.label" style="width:180px" placeholder="Select label" allow-search :options="labelOptions" :loading="loadingLabels" @focus="ensureLabels" />
+              <a-select v-model="f.label" style="width:180px" placeholder="Select label" allow-search :options="labelOptions" :loading="loadingLabels" @focus="ensureLabels" @change="onLabelChange(i)" />
               <a-select v-model="f.op" :options="ops" style="width:60px" />
               <a-select v-model="valuesDraft[i]" multiple allow-search style="width:160px" placeholder="Select value" :options="valueOptions[i]" :loading="loadingValues[i]" @focus="ensureLabelValues(i)" @change="commitValues(i)" />
               
@@ -140,11 +140,17 @@ function commitValues(idx) {
   form.labelFilters[idx].values = Array.isArray(vals) ? vals.slice(0, 1) : []
 }
 
+function onLabelChange(idx) {
+  valuesDraft.value[idx] = []
+  form.labelFilters[idx].values = []
+  valueOptions.value[idx] = []
+}
+
 function addLabelFilter() { form.labelFilters.push({ label: '', op: '=', values: [] }) }
 function removeLabelFilter(i) { form.labelFilters.splice(i, 1) }
 
 function run() {
-  emit('run', { mode: 'builder', builder: { ...form }, explain: false })
+  emit('run', { mode: 'builder', builder: { ...form }, lineLimit: form.lineLimit, explain: false })
 }
 function runCode() {
   emit('run', { mode: 'code', query: code.value, type: form.type, lineLimit: form.lineLimit })

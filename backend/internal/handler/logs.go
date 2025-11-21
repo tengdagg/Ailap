@@ -130,7 +130,8 @@ func (h *LogsHandler) Query(c *gin.Context) {
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
 		// Save query history regardless of result
-		_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "loki", Mode: mode, Query: query}).Error
+		limitVal, _ := strconv.Atoi(lineLimit)
+		_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "loki", Mode: mode, Query: query, LineLimit: limitVal}).Error
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			c.JSON(http.StatusOK, gin.H{"code": 1, "message": string(body), "data": gin.H{"items": []interface{}{}}})
@@ -243,7 +244,7 @@ func (h *LogsHandler) Query(c *gin.Context) {
 	body, _ := io.ReadAll(resp.Body)
 
 	// Save query history regardless of result
-	_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "elasticsearch", Mode: mode, Query: query}).Error
+	_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "elasticsearch", Mode: mode, Query: query, LineLimit: size}).Error
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": string(body), "data": gin.H{"items": []interface{}{}}})

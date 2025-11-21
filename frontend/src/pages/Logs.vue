@@ -19,9 +19,9 @@
 
     <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
       <div style="margin-bottom:8px; color: var(--color-text-3);">查询结果: {{ rows.length }} 条记录</div>
-      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: hidden;">
+      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 320px);">
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-          <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2);">
+          <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2); position: sticky; top: 0; z-index: 1;">
             <tr>
               <th style="padding: 12px; text-align: left; font-weight: 500; width: 220px; border-right: 1px solid var(--color-border-2);">时间</th>
               <th style="padding: 12px; text-align: left; font-weight: 500; width: 100px; border-right: 1px solid var(--color-border-2);">级别</th>
@@ -58,9 +58,9 @@
 
     <div v-else-if="rows.length > 0 && viewMode==='raw'" style="margin-top:12px">
       <div style="margin-bottom:8px; color: var(--color-text-3);">Raw Data: {{ rows.length }} 条记录</div>
-      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto;">
+      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 320px);">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2);">
+          <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2); position: sticky; top: 0; z-index: 1;">
             <tr>
               <th v-for="(col, cidx) in rawColumns" :key="cidx" style="padding: 8px; text-align: left; font-weight: 500; border-right: 1px solid var(--color-border-2); white-space: nowrap;">{{ col }}</th>
             </tr>
@@ -127,7 +127,7 @@
                   @click="showNoteModal(item)"
                   style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center;"
                 >
-                  <icon-tag />
+                  <icon-tag style="color: var(--color-primary-6) !important;" />
                 </a-button>
               </a-tooltip>
               <a-tooltip content="删除记录">
@@ -135,28 +135,20 @@
                   size="mini" 
                   type="text" 
                   @click="confirmDelete(item)"
-                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--color-danger-6);"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center;"
                 >
-                  <icon-delete />
+                  <icon-delete style="color: #f53f3f !important;" />
                 </a-button>
               </a-tooltip>
               <a-tooltip :content="item.isFavorite ? '取消收藏' : '添加收藏'">
                 <a-button 
                   size="mini" 
                   type="text" 
-                  :style="{ 
-                    width: '20px', 
-                    height: '20px', 
-                    padding: '0', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    color: item.isFavorite ? 'var(--color-warning-6)' : 'var(--color-text-3)'
-                  }"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center;"
                   @click="toggleQueryFavorite(item)"
                 >
-                  <icon-star-fill v-if="item.isFavorite" />
-                  <icon-star v-else />
+                  <icon-star-fill v-if="item.isFavorite" style="color: #ff7d00 !important;" />
+                  <icon-star v-else style="color: var(--color-text-3);" />
                 </a-button>
               </a-tooltip>
               <a-tooltip content="执行查询">
@@ -164,9 +156,9 @@
                   size="mini" 
                   type="text" 
                   @click="executeQuery(item)"
-                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--color-primary-6);"
+                  style="width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center;"
                 >
-                  <icon-send />
+                  <icon-send style="color: var(--color-primary-6) !important;" />
                 </a-button>
               </a-tooltip>
             </div>
@@ -534,7 +526,8 @@ async function executeQuery(item) {
       step: step.value,
       direction: direction.value,
       mode: item.mode,
-      query: item.query
+      query: item.query,
+      lineLimit: item.lineLimit || 1000
     }
     
     loading.value = true

@@ -80,7 +80,7 @@ function edit(record) {
   }
 }
 
-async function remove(record) { await deleteDataSource(record.id); await fetchList() }
+async function remove(record) { await deleteDataSource(record.id); Message.success('删除成功'); await fetchList() }
 async function test(record) {
   loading.value = true
   try {

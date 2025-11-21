@@ -14,6 +14,7 @@ type LogQueryHistory struct {
 	Engine     string    `json:"engine"`
 	Mode       string    `json:"mode"`
 	Query      string    `json:"query"`
+	LineLimit  int       `json:"lineLimit"`
 	Note       string    `json:"note"`
 	IsFavorite bool      `gorm:"default:false" json:"isFavorite"`
 	CreatedAt  time.Time `json:"createdAt"`
