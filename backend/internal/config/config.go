@@ -26,8 +26,8 @@ func init() {
 	viper.SetDefault("JWT_SECRET", "dev-secret-change-me")
 	viper.SetDefault("DB_DRIVER", "")
 	viper.SetDefault("DB_DSN", "")
-	viper.SetDefault("READ_TIMEOUT", 15)
-	viper.SetDefault("WRITE_TIMEOUT", 15)
+	viper.SetDefault("READ_TIMEOUT", 120)
+	viper.SetDefault("WRITE_TIMEOUT", 300)
 	viper.SetDefault("ALLOW_ORIGINS", []string{"*"})
 
 	cfg = AppConfig{
@@ -42,17 +42,3 @@ func init() {
 }
 
 func Get() AppConfig { return cfg }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
