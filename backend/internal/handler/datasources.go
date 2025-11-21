@@ -47,11 +47,18 @@ func (h *DataSourcesHandler) Create(c *gin.Context) {
 		c.JSON(400, gin.H{"code": 400, "message": "bad request"})
 		return
 	}
+	name := stringOr(raw["name"])
+	endpoint := stringOr(raw["endpoint"])
+	if name == "" || endpoint == "" {
+		c.JSON(400, gin.H{"code": 400, "message": "name and endpoint are required"})
+		return
+	}
+
 	cfgBytes, _ := json.Marshal(raw)
 	d := model.DataSource{
-		Name:     stringOr(raw["name"]),
+		Name:     name,
 		Type:     stringOr(raw["type"]),
-		Endpoint: stringOr(raw["endpoint"]),
+		Endpoint: endpoint,
 		Config:   string(cfgBytes),
 	}
 	if err := database.GetDB().Create(&d).Error; err != nil {
@@ -69,11 +76,18 @@ func (h *DataSourcesHandler) Update(c *gin.Context) {
 		c.JSON(400, gin.H{"code": 400, "message": "bad request"})
 		return
 	}
+	name := stringOr(raw["name"])
+	endpoint := stringOr(raw["endpoint"])
+	if name == "" || endpoint == "" {
+		c.JSON(400, gin.H{"code": 400, "message": "name and endpoint are required"})
+		return
+	}
+
 	cfgBytes, _ := json.Marshal(raw)
 	updates := map[string]interface{}{
-		"name":     stringOr(raw["name"]),
+		"name":     name,
 		"type":     stringOr(raw["type"]),
-		"endpoint": stringOr(raw["endpoint"]),
+		"endpoint": endpoint,
 		"config":   string(cfgBytes),
 	}
 	id := c.Param("id")

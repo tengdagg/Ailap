@@ -1,6 +1,6 @@
 <template>
   <page-container>
-    <a-form :model="form" :rules="rules" layout="vertical" style="max-width:900px">
+    <a-form ref="formRef" :model="form" :rules="rules" layout="vertical" style="max-width:900px">
       <a-form-item label="名称" field="name" required>
         <a-input v-model="form.name" />
       </a-form-item>
@@ -98,6 +98,8 @@ import { createDataSource, testConnectionPayload, getDataSourceById, updateDataS
 import { Message } from '@arco-design/web-vue'
 import { useRouter, useRoute } from 'vue-router'
 
+const formRef = ref(null)
+
 const router = useRouter()
 const route = useRoute()
 
@@ -121,6 +123,7 @@ const form = reactive({
 })
 
 const rules = {
+  name: [{ required: true, message: '名称不能为空' }],
   endpoint: [
     { required: true, message: 'URL 不能为空' },
     { match: urlPattern, message: '请输入合法的 URL（http/https）' },
@@ -147,6 +150,9 @@ async function onTest() {
 async function onSave() {
   saving.value = true
   try {
+    const res = await formRef.value?.validate()
+    if (res) return
+
     const id = route.query.id
     let resp
     if (id) {
