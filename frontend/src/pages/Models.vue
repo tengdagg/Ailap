@@ -9,29 +9,39 @@
 
     <a-grid v-if="!editingId && !creating && !preset" :cols="24" :col-gap="18" :row-gap="16">
       <a-grid-item v-for="m in models" :key="m.id" :span="6">
-        <a-card hoverable style="position:relative">
-          <template #title>
-            <div style="display:flex;align-items:center;gap:8px">
-              <img :src="getLogo(m.provider)" alt="logo" style="width:24px;height:24px;object-fit:contain" />
-              <span>{{ m.name }}</span>
-              <a-tag v-if="m.isDefault" color="arcoblue" size="small">默认</a-tag>
+        <a-card hoverable class="model-card" :bordered="true">
+          <div class="model-card-header">
+            <div class="model-info">
+              <img :src="getLogo(m.provider)" alt="logo" class="model-logo" />
+              <span class="model-name">{{ m.name }}</span>
             </div>
-          </template>
-          <div style="color:var(--color-text-3); min-height:52px">
-            <div>供应商：{{ m.provider }}</div>
-            <div>模型：{{ m.model }}</div>
+            <a-tag v-if="m.isDefault" color="arcoblue" size="small">默认</a-tag>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-            <a-space>
-              <a-switch size="small" :model-value="!!m.enabled" @change="(v)=>onToggleEnabled(m, v)">启用</a-switch>
-              <a-button size="mini" type="outline" @click="setDefault(m)" :disabled="m.isDefault">设为默认</a-button>
-            </a-space>
-            <a-space>
-              <a-button size="mini" @click="startEdit(m)">编辑</a-button>
-              <a-popconfirm content="确认删除？" @ok="remove(m)">
-                <a-button size="mini" status="danger">删除</a-button>
-              </a-popconfirm>
-            </a-space>
+          
+          <div class="model-card-body">
+            <div class="info-row">
+              <span class="label">供应商：</span>
+              <span class="value">{{ m.provider }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">模型：</span>
+              <span class="value">{{ m.model }}</span>
+            </div>
+          </div>
+
+          <div class="model-card-footer">
+            <div class="status-switch">
+              <a-switch size="small" :model-value="!!m.enabled" @change="(v)=>onToggleEnabled(m, v)" />
+              <span :class="['status-text', { enabled: m.enabled }]">{{ m.enabled ? '已启用' : '已停用' }}</span>
+            </div>
+            
+            <div class="actions">
+               <a-button size="mini" type="text" @click="setDefault(m)" :disabled="m.isDefault" v-if="!m.isDefault">设为默认</a-button>
+               <a-button size="mini" @click="startEdit(m)">编辑</a-button>
+               <a-popconfirm content="确认删除？" @ok="remove(m)">
+                 <a-button size="mini" status="danger">删除</a-button>
+               </a-popconfirm>
+            </div>
           </div>
         </a-card>
       </a-grid-item>
@@ -131,4 +141,73 @@ async function setDefault(m) {
 
 onMounted(fetchList)
 </script>
+
+<style scoped>
+.model-card {
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+.model-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.model-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.model-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.model-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+.model-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+.model-card-body {
+  margin-bottom: 20px;
+  color: var(--color-text-2);
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.label {
+  color: var(--color-text-3);
+  width: 60px;
+}
+.model-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border-1);
+  padding-top: 12px;
+}
+.status-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-text {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+.status-text.enabled {
+  color: rgb(var(--green-6));
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+</style>
 
