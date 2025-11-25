@@ -28,8 +28,14 @@
         </a-space>
       </div>
     </a-layout-header>
-    <a-layout>
-      <a-layout-sider :collapsed="collapsed" collapsible @collapse="onCollapse">
+    <a-layout class="main-layout">
+      <a-layout-sider
+        class="app-sider"
+        :collapsed="collapsed"
+        :width="208"
+        :collapsed-width="56"
+        breakpoint="xl"
+      >
         <app-menu />
       </a-layout-sider>
       <a-layout-content class="app-content">
@@ -55,11 +61,9 @@ const collapsed = computed({ get:() => ui.siderCollapsed, set:(v)=> ui.setSiderC
 const crumbs = computed(() => route.matched.filter(m => m.path !== '/'))
 const isDark = computed(() => ui.isDark)
 
-// 获取当前页面的标题和副标题
 const pageTitle = computed(() => route.meta?.pageTitle || '')
 const pageSubtitle = computed(() => route.meta?.pageSubtitle || '')
 function toggleTheme() { ui.toggleTheme() }
-function onCollapse(v) { ui.setSiderCollapsed(v) }
 
 function goProfile() { router.push('/profile') }
 function onLogout() { auth.clear(); router.replace('/login') }
@@ -67,6 +71,10 @@ function onLogout() { auth.clear(); router.replace('/login') }
 
 <style scoped>
 .app-header { display:flex; align-items:center; gap:12px; height:56px; }
+.main-layout { flex: 1; min-height: 0; }
+.app-sider { overflow: hidden; }
+.app-sider :deep(.arco-layout-sider-children) { height: 100%; }
+.app-sider:not(:deep(.arco-layout-sider-collapsed)) { overflow-y: auto; }
 .logo { 
   display: flex; 
   align-items: center; 

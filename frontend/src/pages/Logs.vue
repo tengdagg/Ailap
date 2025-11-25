@@ -212,10 +212,21 @@ import { Message, Modal } from '@arco-design/web-vue'
 import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch } from '@arco-design/web-vue/es/icon'
 import LogAnalysisChat from '@/components/LogAnalysisChat.vue'
 
-const datasource = ref('loki')
-const dsOptions = [ { label: 'Loki', value: 'loki' }, { label: 'Elasticsearch', value: 'elasticsearch' } ]
+const datasource = ref('')
 const lokiDsOptions = ref([])
 const esDsOptions = ref([])
+
+// Computed property to dynamically show only configured data sources
+const dsOptions = computed(() => {
+  const options = []
+  if (lokiDsOptions.value.length > 0) {
+    options.push({ label: 'Loki', value: 'loki' })
+  }
+  if (esDsOptions.value.length > 0) {
+    options.push({ label: 'Elasticsearch', value: 'elasticsearch' })
+  }
+  return options
+})
 const selectedLokiId = ref('')
 const selectedEsId = ref('')
 const mode = ref('Builder')
@@ -314,9 +325,29 @@ function formatTimestamp(timestamp) {
 }
 
 async function onRunLoki(payload) {
+  // Validation
+  if (payload.mode === 'code') {
+    if (!payload.query || !payload.query.trim()) {
+      Message.warning('请输入查询语句')
+      return
+    }
+  } else if (payload.mode === 'builder') {
+    const hasFilter = payload.builder.labelFilters.some(f => f.label && f.values && f.values.length > 0)
+    const hasContains = payload.builder.contains && payload.builder.contains.trim()
+    if (!hasFilter && !hasContains) {
+      Message.warning('请选择查询条件')
+      return
+    }
+  }
   await runQuery({ engine: 'loki', payload })
 }
+
 async function onRunES(payload) {
+  // Validation
+  if (!payload.query || !payload.query.trim()) {
+    Message.warning('请输入查询语句')
+    return
+  }
   viewMode.value = payload?.mode === 'raw' ? 'raw' : 'logs'
   await runQuery({ engine: 'elasticsearch', payload })
 }
@@ -598,6 +629,15 @@ onMounted(async () => {
       selectedEsId.value = esDsOptions.value[0].value
       localStorage.setItem('last_es_ds_id', selectedEsId.value)
       console.log('Selected ES datasource:', selectedEsId.value)
+    }
+    
+    // Auto-select first available data source type
+    if (!datasource.value) {
+      if (lokiDsOptions.value.length > 0) {
+        datasource.value = 'loki'
+      } else if (esDsOptions.value.length > 0) {
+        datasource.value = 'elasticsearch'
+      }
     }
   } catch (e) {
     console.error('Failed to load datasources:', e)
