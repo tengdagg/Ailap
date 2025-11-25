@@ -15,7 +15,9 @@
     <a-drawer
       v-model:visible="visible"
       title="AI 日志分析助手"
+      placement="right"
       width="450px"
+      :drawer-style="{ top: '10%', height: '90%', borderRadius: '16px 0 0 16px' }"
       :footer="false"
       unmount-on-close
     >
@@ -65,7 +67,7 @@
           <a-textarea
             v-model="inputContent"
             placeholder="输入你的问题..."
-            :auto-size="{ minRows: 1, maxRows: 4 }"
+            :auto-size="{ minRows: 3, maxRows: 6 }"
             @keydown.enter.prevent="handleEnter"
           />
           <a-button type="primary" @click="handleSend" :loading="loading">
