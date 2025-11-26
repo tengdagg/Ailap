@@ -6,7 +6,7 @@
     <!-- Overview Cards -->
     <a-grid :cols="{ xs: 1, sm: 2, md: 4 }" :col-gap="16" :row-gap="16" class="overview-cards">
       <a-grid-item>
-        <a-card class="overview-card" :bordered="false">
+        <a-card class="overview-card blue-card" :bordered="false">
           <div class="card-content">
             <div class="card-icon blue">
               <icon-storage />
@@ -19,7 +19,7 @@
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card class="overview-card" :bordered="false">
+        <a-card class="overview-card purple-card" :bordered="false">
           <div class="card-content">
             <div class="card-icon purple">
               <icon-robot />
@@ -32,7 +32,7 @@
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card class="overview-card" :bordered="false">
+        <a-card class="overview-card green-card" :bordered="false">
           <div class="card-content">
             <div class="card-icon green">
               <icon-history />
@@ -45,7 +45,7 @@
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card class="overview-card" :bordered="false">
+        <a-card class="overview-card orange-card" :bordered="false">
           <div class="card-content">
             <div class="card-icon orange">
               <icon-star />
@@ -160,14 +160,44 @@ function formatTime(timeStr) {
 </script>
 
 <style scoped>
-
+.overview-cards {
+  margin-bottom: 16px;
+}
 
 .overview-card {
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
 }
 
 .overview-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.overview-card.blue-card {
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.03) 0%, rgba(22, 93, 255, 0.01) 100%);
+  border: 1px solid rgba(22, 93, 255, 0.08);
+}
+
+.overview-card.purple-card {
+  background: linear-gradient(135deg, rgba(114, 46, 209, 0.03) 0%, rgba(114, 46, 209, 0.01) 100%);
+  border: 1px solid rgba(114, 46, 209, 0.08);
+}
+
+.overview-card.green-card {
+  background: linear-gradient(135deg, rgba(0, 180, 42, 0.03) 0%, rgba(0, 180, 42, 0.01) 100%);
+  border: 1px solid rgba(0, 180, 42, 0.08);
+}
+
+.overview-card.orange-card {
+  background: linear-gradient(135deg, rgba(255, 125, 0, 0.03) 0%, rgba(255, 125, 0, 0.01) 100%);
+  border: 1px solid rgba(255, 125, 0, 0.08);
+}
+
+.overview-card :deep(.arco-card-body) {
+  padding: 20px;
 }
 
 .card-content {
@@ -177,33 +207,43 @@ function formatTime(timeStr) {
 }
 
 .card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.overview-card:hover .card-icon {
+  transform: scale(1.05);
 }
 
 .card-icon.blue {
-  background-color: rgba(22, 93, 255, 0.1);
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.15) 0%, rgba(22, 93, 255, 0.05) 100%);
   color: #165dff;
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.15);
 }
 
 .card-icon.purple {
-  background-color: rgba(114, 46, 209, 0.1);
+  background: linear-gradient(135deg, rgba(114, 46, 209, 0.15) 0%, rgba(114, 46, 209, 0.05) 100%);
   color: #722ed1;
+  box-shadow: 0 4px 12px rgba(114, 46, 209, 0.15);
 }
 
 .card-icon.green {
-  background-color: rgba(0, 180, 42, 0.1);
+  background: linear-gradient(135deg, rgba(0, 180, 42, 0.15) 0%, rgba(0, 180, 42, 0.05) 100%);
   color: #00b42a;
+  box-shadow: 0 4px 12px rgba(0, 180, 42, 0.15);
 }
 
 .card-icon.orange {
-  background-color: rgba(255, 125, 0, 0.1);
+  background: linear-gradient(135deg, rgba(255, 125, 0, 0.15) 0%, rgba(255, 125, 0, 0.05) 100%);
   color: #ff7d00;
+  box-shadow: 0 4px 12px rgba(255, 125, 0, 0.15);
 }
 
 .card-info {
@@ -211,34 +251,98 @@ function formatTime(timeStr) {
 }
 
 .card-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-text-3);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .card-value {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--color-text-1);
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
 .activity-card, .quick-actions-card {
   height: 100%;
+  border-radius: 12px;
+}
+
+.activity-card :deep(.arco-card-header),
+.quick-actions-card :deep(.arco-card-header) {
+  border-bottom: 1px solid var(--color-border-2);
+  padding: 16px 20px;
+}
+
+.activity-card :deep(.arco-card-body),
+.quick-actions-card :deep(.arco-card-body) {
+  padding: 20px;
 }
 
 .activity-item {
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--color-border-1);
+  transition: background-color 0.2s;
+}
+
+.activity-item:hover {
+  background-color: var(--color-fill-1);
+  margin: 0 -12px;
+  padding: 14px 12px;
+  border-radius: 8px;
 }
 
 .activity-item:last-child {
   border-bottom: none;
 }
 
+.activity-item :deep(.arco-list-item-meta-title) {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-1);
+}
+
+.activity-item :deep(.arco-list-item-meta-description) {
+  font-size: 12px;
+  color: var(--color-text-3);
+  margin-top: 4px;
+}
+
 .empty-activity {
   text-align: center;
-  padding: 20px;
+  padding: 40px 20px;
   color: var(--color-text-3);
+  font-size: 14px;
+}
+
+.quick-actions-card :deep(.arco-btn) {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.quick-actions-card :deep(.arco-btn:not(.arco-btn-primary)) {
+  border: 1px solid var(--color-border-2);
+}
+
+.quick-actions-card :deep(.arco-btn:not(.arco-btn-primary):hover) {
+  border-color: rgb(var(--primary-6));
+  color: rgb(var(--primary-6));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.1);
+}
+
+.quick-actions-card :deep(.arco-btn-primary) {
+  background: linear-gradient(135deg, #165dff 0%, #4080ff 100%);
+  border: none;
+}
+
+.quick-actions-card :deep(.arco-btn-primary:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(22, 93, 255, 0.25);
 }
 </style>
 
