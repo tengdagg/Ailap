@@ -45,6 +45,19 @@ docker run -d \
 Access the application at `http://localhost:8080`.
 The data (SQLite DB) will be persisted in the `./data` directory on your host.
 
+### Custom Initial Admin Credentials
+You can set the initial admin username and password using environment variables:
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v $(pwd)/data:/app/data \
+  -e AILAP_ADMIN_USER=myadmin \
+  -e AILAP_ADMIN_PASS=mypassword \
+  --name ailap \
+  ailap
+```
+
 
 
 
