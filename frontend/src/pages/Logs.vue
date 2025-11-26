@@ -20,26 +20,153 @@
     <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
       <div style="margin-bottom:8px; color: var(--color-text-3);">查询结果: {{ rows.length }} 条记录</div>
       <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 320px);">
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
           <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2); position: sticky; top: 0; z-index: 1;">
             <tr>
-              <th style="padding: 12px; text-align: left; font-weight: 500; width: 220px; border-right: 1px solid var(--color-border-2);">时间</th>
-              <th style="padding: 12px; text-align: left; font-weight: 500; width: 100px; border-right: 1px solid var(--color-border-2);">级别</th>
-              <th style="padding: 12px; text-align: left; font-weight: 500;">内容</th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 140px; border-right: 1px solid var(--color-border-2);">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  源地址
+                  <a-popover trigger="click" position="bottom">
+                    <icon-filter :style="{ color: filters.source ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
+                    <template #content>
+                      <div style="width:200px">
+                        <a-input v-model="filters.source" placeholder="搜索源地址..." size="small" allow-clear />
+                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
+                          <div v-for="val in getUniqueValues('source')" :key="val" 
+                               @click="setFilter('source', val)"
+                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
+                               class="filter-item">
+                            {{ val }}
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-popover>
+                </div>
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 170px; border-right: 1px solid var(--color-border-2);">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  时间
+                  <a-popover trigger="click" position="bottom">
+                    <icon-filter :style="{ color: filters.time ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
+                    <template #content>
+                      <div style="width:200px">
+                        <a-input v-model="filters.time" placeholder="搜索时间..." size="small" allow-clear />
+                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
+                          <div v-for="val in getUniqueValues('time')" :key="val" 
+                               @click="setFilter('time', val)"
+                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
+                               class="filter-item">
+                            {{ val }}
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-popover>
+                </div>
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 200px; border-right: 1px solid var(--color-border-2);">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  请求地址
+                  <a-popover trigger="click" position="bottom">
+                    <icon-filter :style="{ color: filters.host ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
+                    <template #content>
+                      <div style="width:200px">
+                        <a-input v-model="filters.host" placeholder="搜索地址..." size="small" allow-clear />
+                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
+                          <div v-for="val in getUniqueValues('host')" :key="val" 
+                               @click="setFilter('host', val)"
+                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
+                               class="filter-item">
+                            {{ val }}
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-popover>
+                </div>
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 80px; border-right: 1px solid var(--color-border-2);">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  方式
+                  <a-popover trigger="click" position="bottom">
+                    <icon-filter :style="{ color: filters.method ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
+                    <template #content>
+                      <div style="width:120px">
+                        <a-input v-model="filters.method" placeholder="搜索方式..." size="small" allow-clear />
+                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
+                          <div v-for="val in getUniqueValues('method')" :key="val" 
+                               @click="setFilter('method', val)"
+                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
+                               class="filter-item">
+                            {{ val }}
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-popover>
+                </div>
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 80px; border-right: 1px solid var(--color-border-2);">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  状态
+                  <a-popover trigger="click" position="bottom">
+                    <icon-filter :style="{ color: filters.status ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
+                    <template #content>
+                      <div style="width:100px">
+                        <a-input v-model="filters.status" placeholder="搜索状态..." size="small" allow-clear />
+                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
+                          <div v-for="val in getUniqueValues('status')" :key="val" 
+                               @click="setFilter('status', val)"
+                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
+                               class="filter-item">
+                            {{ val }}
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-popover>
+                </div>
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 100px; border-right: 1px solid var(--color-border-2);">
+                耗时
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 150px; border-right: 1px solid var(--color-border-2);">
+                后端
+              </th>
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-right: 1px solid var(--color-border-2);">
+                客户端
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(record, index) in paginatedRows" :key="index" 
                 :style="{ backgroundColor: index % 2 === 0 ? 'var(--color-bg-1)' : 'var(--color-fill-1)' }"
                 style="border-bottom: 1px solid var(--color-border-2);">
-              <td style="padding: 12px; border-right: 1px solid var(--color-border-2); font-family: monospace; font-size: 12px;">
-                {{ formatTimestamp(record.timestamp) }}
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
+                {{ record.parsed.source }}
               </td>
-              <td style="padding: 12px; border-right: 1px solid var(--color-border-2);">
-                {{ record.level || '-' }}
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
+                {{ record.parsed.time }}
               </td>
-              <td style="padding: 12px; word-break: break-all; max-width: 600px;">
-                {{ record.message || '-' }}
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); word-break: break-all;">
+                <div style="font-weight:500">{{ record.parsed.host }}</div>
+                <div style="color:var(--color-text-3); font-size:12px">{{ record.parsed.path }}</div>
+              </td>
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2);">
+                <a-tag size="small" :color="getMethodColor(record.parsed.method)">{{ record.parsed.method }}</a-tag>
+              </td>
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2);">
+                <a-tag size="small" :color="getStatusColor(record.parsed.status)">{{ record.parsed.status }}</a-tag>
+              </td>
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
+                {{ record.parsed.duration }}s
+              </td>
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); word-break: break-all; font-size: 12px;">
+                {{ record.parsed.upstream }}
+              </td>
+              <td style="padding: 8px 12px; word-break: break-all;">
+                {{ record.parsed.agent }}
               </td>
             </tr>
           </tbody>
@@ -209,7 +336,7 @@ import ElasticsearchEditor from '@/components/logs/ElasticsearchEditor.vue'
 import { queryLogs, history as apiHistory, inspect, toggleFavorite, updateNote, deleteHistory } from '@/api/logs'
 import { listDataSources } from '@/api/datasources'
 import { Message, Modal } from '@arco-design/web-vue'
-import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch, IconFilter } from '@arco-design/web-vue/es/icon'
 import LogAnalysisChat from '@/components/LogAnalysisChat.vue'
 
 const datasource = ref('')
@@ -266,12 +393,73 @@ const rawColumns = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 
+const filters = ref({
+  source: '',
+  time: '',
+  host: '',
+  method: '',
+  status: '',
+  duration: '',
+  upstream: '',
+  agent: ''
+})
+
+const parsedRows = computed(() => {
+  return rows.value.map(record => {
+    const parsed = parseLogMessage(record.message)
+    return {
+      ...record,
+      parsed: parsed || {
+        source: '-',
+        time: formatTimestamp(record.timestamp),
+        host: '-',
+        path: '-',
+        method: '-',
+        status: '-',
+        duration: '-',
+        upstream: '-',
+        agent: record.message
+      }
+    }
+  })
+})
+
+const filteredRows = computed(() => {
+  return parsedRows.value.filter(row => {
+    const p = row.parsed
+    if (filters.value.source && !p.source.toLowerCase().includes(filters.value.source.toLowerCase())) return false
+    if (filters.value.time && !p.time.toLowerCase().includes(filters.value.time.toLowerCase())) return false
+    if (filters.value.host && !p.host.toLowerCase().includes(filters.value.host.toLowerCase()) && !p.path.toLowerCase().includes(filters.value.host.toLowerCase())) return false
+    if (filters.value.method && !p.method.toLowerCase().includes(filters.value.method.toLowerCase())) return false
+    if (filters.value.status && !p.status.toLowerCase().includes(filters.value.status.toLowerCase())) return false
+    if (filters.value.duration && !p.duration.toLowerCase().includes(filters.value.duration.toLowerCase())) return false
+    if (filters.value.upstream && !p.upstream.toLowerCase().includes(filters.value.upstream.toLowerCase())) return false
+    if (filters.value.agent && !p.agent.toLowerCase().includes(filters.value.agent.toLowerCase())) return false
+    return true
+  })
+})
+
+// 获取列的唯一值
+function getUniqueValues(key) {
+  const values = new Set()
+  parsedRows.value.forEach(row => {
+    if (row.parsed[key]) {
+      values.add(row.parsed[key])
+    }
+  })
+  return Array.from(values).sort()
+}
+
+function setFilter(key, val) {
+  filters.value[key] = val
+}
+
 // 计算属性
-const totalPages = computed(() => Math.ceil(rows.value.length / pageSize.value))
+const totalPages = computed(() => Math.ceil(filteredRows.value.length / pageSize.value))
 const paginatedRows = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return rows.value.slice(start, end)
+  return filteredRows.value.slice(start, end)
 })
 
 // 分页方法
@@ -650,5 +838,67 @@ function formatRawCell(raw, key) {
   if (typeof val === 'object') return JSON.stringify(val)
   return String(val)
 }
+
+function parseLogMessage(msg) {
+  if (!msg) return null
+  
+  // Clean up message if it starts with message="...
+  let cleanMsg = msg
+  if (cleanMsg.startsWith('message="')) {
+    cleanMsg = cleanMsg.substring(9)
+    if (cleanMsg.endsWith('"')) {
+      cleanMsg = cleanMsg.substring(0, cleanMsg.length - 1)
+    }
+  } else if (cleanMsg.startsWith('message=')) {
+    cleanMsg = cleanMsg.substring(8)
+  }
+
+  // Example: 172.21.8.88 - [26/Nov/2025:09:51:51 +0800] "zabbix6.aaa.com" "GET /path HTTP/1.1" 200 28748 "referer" "ua" "-" unix:/run/php-fpm/zabbix.sock 0.331 0.330
+  // Regex to capture: IP, Time, Host, Request, Status, Size, Referer, UA, XFF, Upstream, Duration, UpstreamTime
+  const regex = /^(\S+) \S+ \[(.*?)\] "(\S+)" "(.*?)" (\d+) (\d+) "(.*?)" "(.*?)" "(.*?)" (\S+) (\S+) (\S+)/
+  const match = cleanMsg.match(regex)
+  if (!match) return null
+  
+  const [_, source, time, host, request, status, size, referer, agent, xff, upstream, duration, upstreamTime] = match
+  const [method, path] = request.split(' ')
+  
+  return {
+    source,
+    time,
+    host,
+    method: method || '-',
+    path: path || '-',
+    agent: agent === '-' ? '' : agent,
+    status,
+    upstream: upstream === '-' ? '' : upstream,
+    duration
+  }
+}
+
+function getMethodColor(method) {
+  if (!method) return 'gray'
+  const m = method.toUpperCase()
+  if (m === 'GET') return 'blue'
+  if (m === 'POST') return 'green'
+  if (m === 'PUT') return 'orange'
+  if (m === 'DELETE') return 'red'
+  return 'gray'
+}
+
+function getStatusColor(status) {
+  if (!status) return 'gray'
+  const s = parseInt(status)
+  if (s >= 200 && s < 300) return 'green'
+  if (s >= 300 && s < 400) return 'blue'
+  if (s >= 400 && s < 500) return 'orange'
+  if (s >= 500) return 'red'
+  return 'gray'
+}
 </script>
+
+<style scoped>
+.filter-item:hover {
+  background-color: var(--color-fill-2);
+}
+</style>
 
