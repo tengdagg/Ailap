@@ -1,6 +1,8 @@
 package router
 
 import (
+	"strings"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -64,6 +66,17 @@ func New() *gin.Engine {
 		ai := api.Group("/ai")
 		ai.POST("/analyze-logs", aiHandler.AnalyzeLogs)
 	}
+
+	// Serve static files
+	r.Static("/assets", "./dist/assets")
+	r.StaticFile("/favicon.ico", "./dist/favicon.ico")
+	r.NoRoute(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api") {
+			c.JSON(404, gin.H{"code": 404, "message": "Not Found"})
+			return
+		}
+		c.File("./dist/index.html")
+	})
 
 	return r
 }
