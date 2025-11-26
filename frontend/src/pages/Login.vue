@@ -48,6 +48,7 @@
           </a-button>
         </div>
       </a-form>
+      <div class="login-version">v{{ version }}</div>
     </div>
   </div>
 </template>
@@ -64,6 +65,7 @@ const auth = useAuthStore()
 
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
+const version = __APP_VERSION__
 
 async function onSubmit() {
   if (loading.value) return
@@ -159,6 +161,13 @@ async function onSubmit() {
     box-shadow: none;
     padding: 20px;
   }
+}
+
+.login-version {
+  text-align: center;
+  margin-top: 16px;
+  color: var(--color-text-3);
+  font-size: 12px;
 }
 </style>
 
