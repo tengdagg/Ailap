@@ -4,7 +4,7 @@
 
 AILAP is a modern log analysis platform built with Go and Vue 3, designed to provide unified log querying, analysis, and AI-assisted diagnostics.
 
-![Image text](https://github.com/tengdagg/Ailap/blob/main/img/img.png)
+![Image text](https://github.com/tengdagg/Ailap/blob/v1.0.11/img/img_1.png)
 
 ## ✨ Features
 
