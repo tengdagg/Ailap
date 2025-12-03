@@ -4,6 +4,8 @@
 
 AILAP 是一个基于 Go 和 Vue 3 的现代化日志分析平台，旨在提供统一的日志查询、分析和 AI 辅助诊断功能。
 
+![Image text](https://github.com/tengdagg/Ailap/blob/main/img/img.png)
+
 ## ✨ 功能特性
 
 ### 📊 日志管理
