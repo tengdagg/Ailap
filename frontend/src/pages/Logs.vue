@@ -19,32 +19,12 @@
 
     <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
       <div style="margin-bottom:8px; color: var(--color-text-3);">查询结果: {{ rows.length }} 条记录</div>
-      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 320px);">
+
+      <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 360px);">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
           <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2); position: sticky; top: 0; z-index: 1;">
             <tr>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 140px; border-right: 1px solid var(--color-border-2);">
-                <div style="display:flex; align-items:center; justify-content:space-between">
-                  源地址
-                  <a-popover trigger="click" position="bottom">
-                    <icon-filter :style="{ color: filters.source ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
-                    <template #content>
-                      <div style="width:200px">
-                        <a-input v-model="filters.source" placeholder="搜索源地址..." size="small" allow-clear />
-                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
-                          <div v-for="val in getUniqueValues('source')" :key="val" 
-                               @click="setFilter('source', val)"
-                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
-                               class="filter-item">
-                            {{ val }}
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                  </a-popover>
-                </div>
-              </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 170px; border-right: 1px solid var(--color-border-2);">
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 180px; border-right: 1px solid var(--color-border-2);">
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   时间
                   <a-popover trigger="click" position="bottom">
@@ -52,90 +32,23 @@
                     <template #content>
                       <div style="width:200px">
                         <a-input v-model="filters.time" placeholder="搜索时间..." size="small" allow-clear />
-                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
-                          <div v-for="val in getUniqueValues('time')" :key="val" 
-                               @click="setFilter('time', val)"
-                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
-                               class="filter-item">
-                            {{ val }}
-                          </div>
-                        </div>
                       </div>
                     </template>
                   </a-popover>
                 </div>
               </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 200px; border-right: 1px solid var(--color-border-2);">
+              <th style="padding: 8px 12px; text-align: left; font-weight: 500;">
                 <div style="display:flex; align-items:center; justify-content:space-between">
-                  请求地址
+                  日志内容
                   <a-popover trigger="click" position="bottom">
-                    <icon-filter :style="{ color: filters.host ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
+                    <icon-filter :style="{ color: filters.content ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
                     <template #content>
-                      <div style="width:200px">
-                        <a-input v-model="filters.host" placeholder="搜索地址..." size="small" allow-clear />
-                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
-                          <div v-for="val in getUniqueValues('host')" :key="val" 
-                               @click="setFilter('host', val)"
-                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
-                               class="filter-item">
-                            {{ val }}
-                          </div>
-                        </div>
+                      <div style="width:250px">
+                        <a-input v-model="filters.content" placeholder="搜索日志内容..." size="small" allow-clear />
                       </div>
                     </template>
                   </a-popover>
                 </div>
-              </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 80px; border-right: 1px solid var(--color-border-2);">
-                <div style="display:flex; align-items:center; justify-content:space-between">
-                  方式
-                  <a-popover trigger="click" position="bottom">
-                    <icon-filter :style="{ color: filters.method ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
-                    <template #content>
-                      <div style="width:120px">
-                        <a-input v-model="filters.method" placeholder="搜索方式..." size="small" allow-clear />
-                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
-                          <div v-for="val in getUniqueValues('method')" :key="val" 
-                               @click="setFilter('method', val)"
-                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
-                               class="filter-item">
-                            {{ val }}
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                  </a-popover>
-                </div>
-              </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 80px; border-right: 1px solid var(--color-border-2);">
-                <div style="display:flex; align-items:center; justify-content:space-between">
-                  状态
-                  <a-popover trigger="click" position="bottom">
-                    <icon-filter :style="{ color: filters.status ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
-                    <template #content>
-                      <div style="width:100px">
-                        <a-input v-model="filters.status" placeholder="搜索状态..." size="small" allow-clear />
-                        <div style="margin-top:8px; max-height:150px; overflow-y:auto; border-top:1px solid var(--color-border-1); padding-top:4px">
-                          <div v-for="val in getUniqueValues('status')" :key="val" 
-                               @click="setFilter('status', val)"
-                               style="padding:4px 8px; cursor:pointer; font-size:12px; border-radius:4px"
-                               class="filter-item">
-                            {{ val }}
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                  </a-popover>
-                </div>
-              </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 100px; border-right: 1px solid var(--color-border-2);">
-                耗时
-              </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 150px; border-right: 1px solid var(--color-border-2);">
-                后端
-              </th>
-              <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-right: 1px solid var(--color-border-2);">
-                客户端
               </th>
             </tr>
           </thead>
@@ -143,30 +56,19 @@
             <tr v-for="(record, index) in paginatedRows" :key="index" 
                 :style="{ backgroundColor: index % 2 === 0 ? 'var(--color-bg-1)' : 'var(--color-fill-1)' }"
                 style="border-bottom: 1px solid var(--color-border-2);">
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
-                {{ record.parsed.source }}
-              </td>
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
+              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace; vertical-align: top; color: var(--color-text-3);">
                 {{ record.parsed.time }}
               </td>
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); word-break: break-all;">
-                <div style="font-weight:500">{{ record.parsed.host }}</div>
-                <div style="color:var(--color-text-3); font-size:12px">{{ record.parsed.path }}</div>
-              </td>
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2);">
-                <a-tag size="small" :color="getMethodColor(record.parsed.method)">{{ record.parsed.method }}</a-tag>
-              </td>
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2);">
-                <a-tag size="small" :color="getStatusColor(record.parsed.status)">{{ record.parsed.status }}</a-tag>
-              </td>
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); font-family: monospace;">
-                {{ record.parsed.duration }}s
-              </td>
-              <td style="padding: 8px 12px; border-right: 1px solid var(--color-border-2); word-break: break-all; font-size: 12px;">
-                {{ record.parsed.upstream }}
-              </td>
-              <td style="padding: 8px 12px; word-break: break-all;">
-                {{ record.parsed.agent }}
+              <td style="padding: 8px 12px; word-break: break-all; font-family: monospace; vertical-align: top;">
+                <!-- Tags for structured logs -->
+                <div v-if="record.parsed.method !== '-' || record.parsed.status !== '-'" style="margin-bottom: 4px; display: flex; gap: 6px; align-items: center;">
+                   <a-tag v-if="record.parsed.method !== '-'" size="small" :color="getMethodColor(record.parsed.method)">{{ record.parsed.method }}</a-tag>
+                   <a-tag v-if="record.parsed.status !== '-'" size="small" :color="getStatusColor(record.parsed.status)">{{ record.parsed.status }}</a-tag>
+                   <span v-if="record.parsed.host !== '-'" style="color: var(--color-text-3); font-size: 12px;">{{ record.parsed.host }}</span>
+                   <span v-if="record.parsed.source !== '-'" style="color: var(--color-text-3); font-size: 12px;">From: {{ record.parsed.source }}</span>
+                </div>
+                <!-- Raw Message -->
+                <div style="line-height: 1.5;">{{ record.message }}</div>
               </td>
             </tr>
           </tbody>
@@ -401,7 +303,8 @@ const filters = ref({
   status: '',
   duration: '',
   upstream: '',
-  agent: ''
+  agent: '',
+  content: ''
 })
 
 const parsedRows = computed(() => {
@@ -435,6 +338,7 @@ const filteredRows = computed(() => {
     if (filters.value.duration && !p.duration.toLowerCase().includes(filters.value.duration.toLowerCase())) return false
     if (filters.value.upstream && !p.upstream.toLowerCase().includes(filters.value.upstream.toLowerCase())) return false
     if (filters.value.agent && !p.agent.toLowerCase().includes(filters.value.agent.toLowerCase())) return false
+    if (filters.value.content && !row.message.toLowerCase().includes(filters.value.content.toLowerCase())) return false
     return true
   })
 })
@@ -478,6 +382,17 @@ function nextPage() {
 function formatTimestamp(timestamp) {
   if (!timestamp) return '-'
   try {
+    // Helper function to format date to YYYY-MM-DD HH:mm:ss
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    }
+
     // Numeric timestamps (number or numeric string)
     if (typeof timestamp === 'number' || (typeof timestamp === 'string' && /^\d+$/.test(timestamp))) {
       let ts = typeof timestamp === 'number' ? timestamp : parseInt(timestamp)
@@ -487,10 +402,7 @@ function formatTimestamp(timestamp) {
       }
       const dateNum = new Date(ts)
       if (!isNaN(dateNum.getTime())) {
-        return dateNum.toLocaleString('zh-CN', {
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', second: '2-digit'
-        })
+        return formatDate(dateNum)
       }
     }
 
@@ -498,10 +410,7 @@ function formatTimestamp(timestamp) {
     if (typeof timestamp === 'string') {
       const dateIso = new Date(timestamp)
       if (!isNaN(dateIso.getTime())) {
-        return dateIso.toLocaleString('zh-CN', {
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', second: '2-digit'
-        })
+        return formatDate(dateIso)
       }
     }
 
@@ -862,9 +771,30 @@ function parseLogMessage(msg) {
   const [_, source, time, host, request, status, size, referer, agent, xff, upstream, duration, upstreamTime] = match
   const [method, path] = request.split(' ')
   
+  // Convert Nginx time format (e.g., "03/Dec/2025:14:01:40 +0800") to YYYY-MM-DD HH:mm:ss
+  const formatNginxTime = (nginxTime) => {
+    try {
+      // Parse format: DD/MMM/YYYY:HH:mm:ss +ZZZZ
+      const match = nginxTime.match(/(\d{2})\/(\w{3})\/(\d{4}):(\d{2}):(\d{2}):(\d{2})/)
+      if (!match) return nginxTime
+      
+      const [, day, monthStr, year, hours, minutes, seconds] = match
+      const monthMap = {
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+      }
+      const month = monthMap[monthStr] || '01'
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    } catch (e) {
+      return nginxTime
+    }
+  }
+  
   return {
     source,
-    time,
+    time: formatNginxTime(time),
     host,
     method: method || '-',
     path: path || '-',
