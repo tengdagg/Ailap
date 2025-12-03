@@ -8,7 +8,8 @@
         size="large"
         @click="visible = true"
       >
-        <icon-robot />
+        <img v-if="defaultModelLogo" :src="defaultModelLogo" style="width: 24px; height: 24px; object-fit: contain;" />
+        <icon-robot v-else />
       </a-button>
     </a-tooltip>
 
@@ -24,7 +25,8 @@
       <div class="chat-container">
         <div class="messages" ref="messagesRef">
           <div v-if="messages.length === 0" class="empty-state">
-            <icon-robot :style="{ fontSize: '48px', color: 'var(--color-text-3)' }" />
+            <img v-if="defaultModelLogo" :src="defaultModelLogo" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 16px;" />
+            <icon-robot v-else :style="{ fontSize: '48px', color: 'var(--color-text-3)' }" />
             <p>你好！我是你的日志分析助手。</p>
             <p>我可以帮你分析当前的 {{ logs.length }} 条日志，找出潜在问题。</p>
             <div class="quick-actions">
@@ -42,6 +44,7 @@
           >
             <div class="avatar">
               <icon-user v-if="msg.role === 'user'" />
+              <img v-else-if="defaultModelLogo" :src="defaultModelLogo" style="width: 20px; height: 20px; object-fit: contain;" />
               <icon-robot v-else />
             </div>
             <div class="content">
@@ -54,7 +57,10 @@
           </div>
 
           <div v-if="loading" class="message-item">
-            <div class="avatar"><icon-robot /></div>
+            <div class="avatar">
+              <img v-if="defaultModelLogo" :src="defaultModelLogo" style="width: 20px; height: 20px; object-fit: contain;" />
+              <icon-robot v-else />
+            </div>
             <div class="content">
               <div class="bubble loading">
                 <icon-loading /> 正在分析中...
@@ -80,10 +86,11 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 import { IconRobot, IconUser, IconSend, IconLoading } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { analyzeLogs } from '@/api/ai'
+import { listModels } from '@/api/models'
 
 
 const props = defineProps({
@@ -102,6 +109,45 @@ const inputContent = ref('')
 const loading = ref(false)
 const messages = ref([])
 const messagesRef = ref(null)
+const defaultModelLogo = ref('')
+let currentAbortController = null
+
+function getLogo(provider) {
+  try {
+    return new URL(`../assets/${provider}.png`, import.meta.url).href
+  } catch (_) {
+    return new URL(`../assets/logo.png`, import.meta.url).href
+  }
+}
+
+async function fetchDefaultModel() {
+  try {
+    const { data } = await listModels()
+    const models = data?.data?.items || []
+    const defaultModel = models.find(m => m.isDefault)
+    if (defaultModel) {
+      defaultModelLogo.value = getLogo(defaultModel.provider)
+    }
+  } catch (e) {
+    console.error('Failed to fetch default model:', e)
+  }
+}
+
+onMounted(() => {
+  fetchDefaultModel()
+})
+
+watch(visible, (val) => {
+  if (!val && loading.value && currentAbortController) {
+    currentAbortController.abort()
+    loading.value = false
+    messages.value.push({
+      role: 'assistant',
+      content: '分析已取消',
+      time: new Date().toLocaleTimeString()
+    })
+  }
+})
 
 // Simple markdown formatter if marked is not installed, but usually it is or we can just display text
 // For now, let's assume we just display text with line breaks
@@ -145,6 +191,7 @@ async function sendPrompt(text) {
   inputContent.value = ''
   scrollToBottom()
   loading.value = true
+  currentAbortController = new AbortController()
 
   try {
     // Prepare logs - limit to last 50 or so to avoid huge payload if not handled by backend
@@ -156,7 +203,7 @@ async function sendPrompt(text) {
     const { data } = await analyzeLogs({
       prompt: content,
       logs: logsToSend
-    })
+    }, { signal: currentAbortController.signal })
 
     if (data.code === 0) {
       messages.value.push({
@@ -172,6 +219,11 @@ async function sendPrompt(text) {
       })
     }
   } catch (error) {
+    if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      // Request canceled, do nothing or log
+      console.log('Request canceled')
+      return
+    }
     console.error(error)
     const errorMsg = error.response?.data?.message || error.message || 'Network error or server unavailable.'
     messages.value.push({
@@ -181,6 +233,7 @@ async function sendPrompt(text) {
     })
   } finally {
     loading.value = false
+    currentAbortController = null
     scrollToBottom()
   }
 }
