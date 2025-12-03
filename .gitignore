@@ -8,7 +8,7 @@ frontend/dist/
 backend/bin/
 backend/tmp/
 backend/coverage/
-
+backend/data/
 # Logs
 *.log
 
