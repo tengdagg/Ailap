@@ -8,7 +8,8 @@
     <div v-if="rows.length">
       <div v-for="item in rows" :key="item.id" class="ds-item">
         <div class="ds-left">
-          <img :src="getTypeLogo(item.type)" alt="logo" class="ds-logo" />
+          <div v-if="item.type==='victorialogs'" class="ds-logo-svg" v-html="victoriaLogsIcon"></div>
+          <img v-else :src="getTypeLogo(item.type)" alt="logo" class="ds-logo" />
           <div class="ds-meta">
             <div class="ds-name">{{ item.name }}</div>
             <div class="ds-sub">{{ item.type }} ｜ {{ item.endpoint }}</div>
@@ -35,6 +36,10 @@ import { Message } from '@arco-design/web-vue'
 import PageContainer from '@/components/PageContainer.vue'
 import { listDataSources, updateDataSource, deleteDataSource, testConnection } from '@/api/datasources'
 
+import victoriaLogsIcon from '@/assets/victoriaLogs.svg?raw' // Use raw SVG content
+const lokiIconUrl = new URL(`../assets/loki.png`, import.meta.url).href
+const esIconUrl = new URL(`../assets/elasticsearch.png`, import.meta.url).href
+
 const route = useRoute()
 const router = useRouter()
 
@@ -43,11 +48,10 @@ const rows = ref([])
 const errorMsg = ref('')
 
 function getTypeLogo(type) {
-  try {
-    return new URL(`../assets/${type}.png`, import.meta.url).href
-  } catch (_) {
-    return new URL(`../assets/logo.png`, import.meta.url).href
-  }
+  if (type === 'victorialogs') return 'vl-svg' // Special marker
+  if (type === 'loki') return lokiIconUrl
+  if (type === 'elasticsearch') return esIconUrl
+  return new URL(`../assets/logo.png`, import.meta.url).href
 }
 
 async function fetchList() {
@@ -77,6 +81,11 @@ function edit(record) {
   }
   if (record.type === 'elasticsearch') {
     router.push(`/datasources/new/elasticsearch?id=${record.id}`)
+    return
+  }
+  if (record.type === 'victorialogs') {
+    router.push(`/datasources/new/victorialogs?id=${record.id}`)
+    return
   }
 }
 
@@ -114,6 +123,7 @@ watch(() => route.query.ts, () => fetchList())
 }
 .ds-left { display: flex; align-items: center; gap: 12px; }
 .ds-logo { width: 45px; height: 45px; object-fit: contain; }
+.ds-logo-svg { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; } /* added for SVG container */
 .ds-meta { display: flex; flex-direction: column; }
 .ds-name { font-weight: 600; }
 .ds-sub { color: var(--color-text-3); font-size: 12px; }

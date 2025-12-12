@@ -9,7 +9,7 @@ AILAP is a modern log analysis platform built with Go and Vue 3, designed to pro
 ## ✨ Features
 
 ### 📊 Log Management
-- **Multi-Source Support**: Supports Loki (LogQL) and Elasticsearch (Lucene) data sources.
+- **Multi-Source Support**: Supports Loki (LogQL) and Elasticsearch (Lucene) & VictoriaLogs (LogsQL) data sources.
 - **Structured Display**: Automatically parse log information.
 - **Advanced Filtering**: Support fuzzy search and value filtering.
 

@@ -73,8 +73,8 @@
                 :description="formatTime(item.createdAt)"
               >
                 <template #avatar>
-                  <a-avatar shape="square" :style="{ backgroundColor: item.engine === 'loki' ? '#165dff' : '#00b42a' }">
-                    {{ item.engine === 'loki' ? 'L' : 'E' }}
+                  <a-avatar shape="square" :style="{ backgroundColor: item.engine === 'loki' ? '#165dff' : (item.engine === 'elasticsearch' ? '#00b42a' : '#ff7d00') }">
+                    {{ item.engine === 'loki' ? 'L' : (item.engine === 'elasticsearch' ? 'E' : 'V') }}
                   </a-avatar>
                 </template>
               </a-list-item-meta>

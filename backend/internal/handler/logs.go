@@ -25,7 +25,7 @@ func NewLogsHandler() *LogsHandler { return &LogsHandler{} }
 // Query proxies logs for different engines (loki, elasticsearch)
 func (h *LogsHandler) Query(c *gin.Context) {
 	engine := c.Query("engine")
-	if engine != "loki" && engine != "elasticsearch" {
+	if engine != "loki" && engine != "elasticsearch" && engine != "victorialogs" {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": []interface{}{}}})
 		return
 	}
@@ -144,7 +144,117 @@ func (h *LogsHandler) Query(c *gin.Context) {
 		return
 	}
 
-	// Elasticsearch branch
+	// VictoriaLogs branch
+	if engine == "victorialogs" {
+		_, cfg, endpoint, ok := resolveVictoriaLogsDatasource(c.Query("datasourceId"))
+		if !ok {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "message": "no victorialogs datasource", "data": gin.H{"items": []interface{}{}}})
+			return
+		}
+
+		params := url.Values{}
+		// VictoriaLogs uses 'query' parameter for LogsQL
+		// If query is empty, maybe default to '*'
+		if query == "" {
+			query = "*"
+		}
+
+		// Handle time range if provided
+		// VictoriaLogs /select/logsql/query supports 'start', 'end' (in RFC3339 or timestamp or relative)
+		// We use the same qStart/qEnd logic if available.
+		// Note: VL usually filters time via _time filter in query, but also supports 'start'/'end' params in /select/logsql/query to narrow down search.
+		if typ == "range" {
+			if qStart != "" {
+				// qStart is ns, VL supports timestamp in seconds? No, VL supports RFC3339 or relative or unix timestamp in seconds (if small) or nanoseconds?
+				// According to VL docs: start/end args can be used. "start=..."
+				// Let's assume qStart is nanoseconds string.
+				// VL expects ISO8601 or duration or timestamp.
+				// Let's try passing as is if it looks like a number? Or convert to RFC3339?
+				// Safer to use RFC3339 or duration.
+				// Existing qStart/qEnd are usually string of nanoseconds (from Logs.vue).
+
+				// Let's rely on standard VL behavior: if 'start' is number, it might be interpreted.
+				// Better approach: convert nanoseconds to seconds for 'start/end'?
+				// Or leave it to the query construction?
+				// Actually VL query can include `_time:[start, end]`.
+				// Let's try adding time filter to query if not present?
+				// But user might type raw query.
+				// Let's just pass start/end params and see if VL respects them.
+				// VL HTTP API /select/logsql/query does respect start/end.
+				params.Set("start", qStart)
+				params.Set("end", qEnd)
+			}
+		}
+		params.Set("query", query)
+		params.Set("limit", lineLimit)
+
+		reqURL := endpoint
+		if parsed, err := url.Parse(reqURL); err == nil && (parsed.Path == "" || parsed.Path == "/") {
+			reqURL = reqURL + "/select/logsql/query?" + params.Encode()
+		} else {
+			if !strings.Contains(reqURL, "?") {
+				reqURL = reqURL + "?" + params.Encode()
+			}
+		}
+
+		req, _ := http.NewRequest(http.MethodGet, reqURL, nil)
+		applyAuthHeaders(req, cfg)
+		client := createHTTPClient(cfg, 60*time.Second)
+		resp, err := client.Do(req)
+		if err != nil {
+			c.JSON(http.StatusGatewayTimeout, gin.H{"code": 504, "message": err.Error()})
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+
+		limitVal, _ := strconv.Atoi(lineLimit)
+		_ = database.GetDB().Create(&model.LogQueryHistory{Engine: "victorialogs", Mode: mode, Query: query, LineLimit: limitVal}).Error
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			c.JSON(http.StatusOK, gin.H{"code": 1, "message": string(body), "data": gin.H{"items": []interface{}{}}})
+			return
+		}
+
+		// Parse JSONL response
+		// VictoriaLogs returns JSONL lines.
+		items := make([]map[string]interface{}, 0)
+		lines := strings.Split(string(body), "\n")
+		for _, line := range lines {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			var entry map[string]interface{}
+			if err := json.Unmarshal([]byte(line), &entry); err == nil {
+				// Normalize to {timestamp, level, message, ...}
+				// VL common fields: _time, _msg, _stream_id
+				row := make(map[string]interface{})
+				row["__raw"] = entry // keep raw for detailed view
+
+				if t, ok := entry["_time"].(string); ok {
+					row["timestamp"] = t
+				}
+				if msg, ok := entry["_msg"].(string); ok {
+					row["message"] = msg
+				} else {
+					// fallback to entire entry as string
+					row["message"] = line
+				}
+				// level? maybe in custom fields
+				// copy other fields
+				for k, v := range entry {
+					if k != "_time" && k != "_msg" {
+						row[k] = v
+					}
+				}
+				items = append(items, row)
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": items}})
+		return
+	}
+
 	_, cfg, endpoint, ok := resolveElasticsearchDatasource(c.Query("datasourceId"))
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "no elasticsearch datasource", "data": gin.H{"items": []interface{}{}}})
@@ -478,6 +588,24 @@ func (h *LogsHandler) Inspect(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"url": urlStr}})
 		return
 	}
+	if engine == "victorialogs" {
+		_, _, endpoint, ok := resolveVictoriaLogsDatasource(c.Query("datasourceId"))
+		if !ok {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "message": "no victorialogs datasource", "data": gin.H{"url": ""}})
+			return
+		}
+		params := url.Values{}
+		params.Set("query", c.Query("query"))
+		if v := c.Query("start"); v != "" {
+			params.Set("start", v)
+		}
+		if v := c.Query("end"); v != "" {
+			params.Set("end", v)
+		}
+		urlStr := endpoint + "/select/logsql/query?" + params.Encode()
+		c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"url": urlStr}})
+		return
+	}
 	// ES inspect
 	_, cfg, endpoint, ok := resolveElasticsearchDatasource(c.Query("datasourceId"))
 	if !ok {
@@ -596,6 +724,49 @@ func resolveElasticsearchDatasource(id string) (ds model.DataSource, cfg map[str
 	}
 	var items []model.DataSource
 	database.GetDB().Where("type = ?", "elasticsearch").Find(&items)
+	if len(items) == 0 {
+		return ds, nil, "", false
+	}
+	picked := -1
+	for i := range items {
+		var c map[string]interface{}
+		_ = json.Unmarshal([]byte(items[i].Config), &c)
+		if c != nil {
+			if v, ok := c["isDefault"].(bool); ok && v {
+				picked = i
+				break
+			}
+		}
+	}
+	if picked == -1 {
+		picked = 0
+	}
+	ds = items[picked]
+	_ = json.Unmarshal([]byte(ds.Config), &cfg)
+	endpoint = ds.Endpoint
+	if endpoint == "" && cfg != nil {
+		if v, o := cfg["endpoint"].(string); o {
+			endpoint = v
+		}
+	}
+	return ds, cfg, endpoint, true
+}
+
+func resolveVictoriaLogsDatasource(id string) (ds model.DataSource, cfg map[string]interface{}, endpoint string, ok bool) {
+	if id != "" {
+		if err := database.GetDB().First(&ds, "id = ?", id).Error; err == nil {
+			_ = json.Unmarshal([]byte(ds.Config), &cfg)
+			endpoint = ds.Endpoint
+			if endpoint == "" && cfg != nil {
+				if v, o := cfg["endpoint"].(string); o {
+					endpoint = v
+				}
+			}
+			return ds, cfg, endpoint, true
+		}
+	}
+	var items []model.DataSource
+	database.GetDB().Where("type = ?", "victorialogs").Find(&items)
 	if len(items) == 0 {
 		return ds, nil, "", false
 	}

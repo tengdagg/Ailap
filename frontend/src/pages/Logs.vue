@@ -5,7 +5,9 @@
       <a-select v-model="datasource" :options="dsOptions" style="width:200px" />
       <a-select v-if="datasource==='loki' && lokiDsOptions.length > 1" v-model="selectedLokiId" :options="lokiDsOptions" style="width:200px" placeholder="选择 Loki 数据源" />
       <a-select v-if="datasource==='elasticsearch' && esDsOptions.length > 1" v-model="selectedEsId" :options="esDsOptions" style="width:200px" placeholder="选择 ES 数据源" />
-      <a-segmented v-model="mode" :options="['Builder','Code']" />
+      <a-select v-if="datasource==='victorialogs' && vlDsOptions.length > 1" v-model="selectedVlId" :options="vlDsOptions" style="width:200px" placeholder="选择 VictoriaLogs 数据源" />
+      <a-segmented v-model="mode" :options="['Builder','Code']" v-if="datasource!=='victorialogs'" />
+      <a-segmented v-model="mode" :options="['Code']" v-else disabled />
       <span>Range</span>
       <a-select v-model="range" :options="rangeOptions" style="width:140px" />
       <span>Step</span>
@@ -15,7 +17,8 @@
     </div>
 
     <loki-editor v-if="datasource==='loki'" :datasource-id="selectedLokiId" @run="onRunLoki" @history="openHistory" @inspect="openInspector" />
-    <elasticsearch-editor v-else @run="onRunES" @history="openHistory" @inspect="openInspector" />
+    <elasticsearch-editor v-else-if="datasource==='elasticsearch'" @run="onRunES" @history="openHistory" @inspect="openInspector" />
+    <victoria-logs-editor v-else-if="datasource==='victorialogs'" :datasource-id="selectedVlId" @run="onRunVL" @history="openHistory" @inspect="openInspector" />
 
     <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
       <div style="margin-bottom:8px; color: var(--color-text-3);">查询结果: {{ rows.length }} 条记录</div>
@@ -143,7 +146,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--color-text-3);">
             <div style="display: flex; gap: 12px; align-items: center;">
               <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
-              <a-tag :color="item.engine === 'loki' ? 'blue' : 'green'" size="small">{{ item.engine }}</a-tag>
+              <a-tag :color="item.engine === 'loki' ? 'blue' : (item.engine === 'elasticsearch' ? 'green' : 'orange')" size="small">{{ item.engine }}</a-tag>
               <a-tag color="gray" size="small">{{ item.mode }}</a-tag>
             </div>
             
@@ -235,6 +238,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import PageContainer from '@/components/PageContainer.vue'
 import LokiEditor from '@/components/logs/LokiEditor.vue'
 import ElasticsearchEditor from '@/components/logs/ElasticsearchEditor.vue'
+import VictoriaLogsEditor from '@/components/logs/VictoriaLogsEditor.vue'
 import { queryLogs, history as apiHistory, inspect, toggleFavorite, updateNote, deleteHistory } from '@/api/logs'
 import { listDataSources } from '@/api/datasources'
 import { Message, Modal } from '@arco-design/web-vue'
@@ -242,8 +246,15 @@ import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch, Icon
 import LogAnalysisChat from '@/components/LogAnalysisChat.vue'
 
 const datasource = ref('')
+watch(datasource, () => {
+  rows.value = []
+  viewMode.value = 'logs'
+  // When switching engines, ensure we are on page 1
+  currentPage.value = 1
+})
 const lokiDsOptions = ref([])
 const esDsOptions = ref([])
+const vlDsOptions = ref([])
 
 // Computed property to dynamically show only configured data sources
 const dsOptions = computed(() => {
@@ -254,10 +265,14 @@ const dsOptions = computed(() => {
   if (esDsOptions.value.length > 0) {
     options.push({ label: 'Elasticsearch', value: 'elasticsearch' })
   }
+  if (vlDsOptions.value.length > 0) {
+    options.push({ label: 'VictoriaLogs', value: 'victorialogs' })
+  }
   return options
 })
 const selectedLokiId = ref('')
 const selectedEsId = ref('')
+const selectedVlId = ref('')
 const mode = ref('Builder')
 const rangeOptions = [
   { label: 'Last 5m', value: '5m' },
@@ -449,6 +464,15 @@ async function onRunES(payload) {
   await runQuery({ engine: 'elasticsearch', payload })
 }
 
+async function onRunVL(payload) {
+    if (!payload.query || !payload.query.trim()) {
+        Message.warning('请输入查询语句')
+        return
+    }
+    viewMode.value = 'logs'
+    await runQuery({ engine: 'victorialogs', payload })
+}
+
 function computeTimeRange() {
   const now = Date.now()
   const map = { m: 60*1000, h: 60*60*1000 }
@@ -466,7 +490,9 @@ async function runQuery(params) {
     lastRangeEndMs.value = nowMs
     const dsId = params.engine === 'loki' 
       ? (selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || '') 
-      : (selectedEsId.value || localStorage.getItem('last_es_ds_id') || '')
+      : (params.engine === 'elasticsearch' 
+         ? (selectedEsId.value || localStorage.getItem('last_es_ds_id') || '')
+         : (selectedVlId.value || localStorage.getItem('last_vl_ds_id') || ''))
     
     console.log('Running query with:', { 
       engine: params.engine, 
@@ -566,6 +592,8 @@ function useQuery(item) {
   } else if (item.engine === 'elasticsearch') {
     datasource.value = 'elasticsearch'
     // 这里可以进一步设置 ElasticsearchEditor 的查询内容
+  } else if (item.engine === 'victorialogs') {
+    datasource.value = 'victorialogs'
   }
   historyVisible.value = false
 }
@@ -632,6 +660,8 @@ async function executeQuery(item) {
       datasource.value = 'loki'
     } else if (item.engine === 'elasticsearch') {
       datasource.value = 'elasticsearch'
+    } else if (item.engine === 'victorialogs') {
+      datasource.value = 'victorialogs'
     }
     
     // 关闭抽屉
@@ -642,8 +672,10 @@ async function executeQuery(item) {
     let dsId = ''
     if (item.engine === 'loki') {
       dsId = selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || ''
-    } else {
+    } else if (item.engine === 'elasticsearch') {
       dsId = selectedEsId.value || localStorage.getItem('last_es_ds_id') || ''
+    } else {
+      dsId = selectedVlId.value || localStorage.getItem('last_vl_ds_id') || ''
     }
     
     const params = {
@@ -694,9 +726,12 @@ async function openInspector(queryStr = '') {
   if (datasource.value === 'loki') {
     const dsId = selectedLokiId.value || localStorage.getItem('last_loki_ds_id') || ''
     params = { engine: 'loki', datasourceId: dsId, start, end, step: step.value, direction: direction.value }
-  } else {
+  } else if (datasource.value === 'elasticsearch') {
     const dsId = selectedEsId.value || localStorage.getItem('last_es_ds_id') || ''
     params = { engine: 'elasticsearch', datasourceId: dsId, start, end }
+  } else {
+    const dsId = selectedVlId.value || localStorage.getItem('last_vl_ds_id') || ''
+    params = { engine: 'victorialogs', datasourceId: dsId, start, end }
   }
   
   if (queryStr) params.query = queryStr
@@ -722,10 +757,28 @@ onMounted(async () => {
       localStorage.setItem('last_loki_ds_id', selectedLokiId.value)
       console.log('Selected Loki datasource:', selectedLokiId.value)
     }
+    lokiDsOptions.value = items.filter(x => x.type === 'loki').map(x => ({ label: x.name, value: String(x.id) }))
+    esDsOptions.value = items.filter(x => x.type === 'elasticsearch').map(x => ({ label: x.name, value: String(x.id) }))
+    vlDsOptions.value = items.filter(x => x.type === 'victorialogs').map(x => ({ label: x.name, value: String(x.id) }))
+    
+    console.log('Loki datasources:', lokiDsOptions.value)
+    console.log('ES datasources:', esDsOptions.value)
+    console.log('VL datasources:', vlDsOptions.value)
+    
+    if (!selectedLokiId.value && lokiDsOptions.value.length) {
+      selectedLokiId.value = lokiDsOptions.value[0].value
+      localStorage.setItem('last_loki_ds_id', selectedLokiId.value)
+      console.log('Selected Loki datasource:', selectedLokiId.value)
+    }
     if (!selectedEsId.value && esDsOptions.value.length) {
       selectedEsId.value = esDsOptions.value[0].value
       localStorage.setItem('last_es_ds_id', selectedEsId.value)
       console.log('Selected ES datasource:', selectedEsId.value)
+    }
+    if (!selectedVlId.value && vlDsOptions.value.length) {
+      selectedVlId.value = vlDsOptions.value[0].value
+      localStorage.setItem('last_vl_ds_id', selectedVlId.value)
+      console.log('Selected VL datasource:', selectedVlId.value)
     }
     
     // Auto-select first available data source type
@@ -734,6 +787,8 @@ onMounted(async () => {
         datasource.value = 'loki'
       } else if (esDsOptions.value.length > 0) {
         datasource.value = 'elasticsearch'
+      } else if (vlDsOptions.value.length > 0) {
+        datasource.value = 'victorialogs'
       }
     }
   } catch (e) {

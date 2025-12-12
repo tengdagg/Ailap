@@ -9,7 +9,7 @@ AILAP 是一个基于 Go 和 Vue 3 的现代化日志分析平台，旨在提供
 ## ✨ 功能特性
 
 ### 📊 日志管理
-- **多数据源支持**：目前支持 Loki (LogQL) 和 Elasticsearch (Lucene) 数据源。
+- **多数据源支持**：目前支持 Loki (LogQL)、Elasticsearch (Lucene)、VictoriaLogs (LogsQL) 数据源。
 - **结构化展示**：自动解析日志信息。
 - **高级筛选**：支持模糊搜索和值筛选。
 
