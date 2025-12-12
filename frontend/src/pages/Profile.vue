@@ -2,31 +2,31 @@
   <page-container>
     <a-grid :cols="24" :col-gap="16" :row-gap="16">
       <a-grid-item :span="8">
-        <a-card title="账户信息">
-          <div class="profile-row"><span class="label">用户名</span><span class="value">{{ userName }}</span></div>
-          <div class="profile-row"><span class="label">主题</span>
+        <a-card :title="$t('profile.accountInfo')">
+          <div class="profile-row"><span class="label">{{ $t('common.username') }}</span><span class="value">{{ userName }}</span></div>
+          <div class="profile-row"><span class="label">{{ $t('profile.theme') }}</span>
             <a-space>
-              <a-tag :color="isDark ? 'arcoblue' : 'gray'">{{ isDark ? '深色' : '浅色' }}</a-tag>
+              <a-tag :color="isDark ? 'arcoblue' : 'gray'">{{ isDark ? $t('profile.dark') : $t('profile.light') }}</a-tag>
               <a-switch :model-value="isDark" @change="toggleTheme" />
             </a-space>
           </div>
         </a-card>
       </a-grid-item>
       <a-grid-item :span="16">
-        <a-card title="修改密码">
+        <a-card :title="$t('profile.changePassword')">
           <a-form :model="form" :rules="rules" ref="formRef" layout="vertical" @submit.prevent>
-            <a-form-item field="oldPassword" label="当前密码">
-              <a-input-password v-model="form.oldPassword" placeholder="请输入当前密码" allow-clear />
+            <a-form-item field="oldPassword" :label="$t('profile.currentPassword')">
+              <a-input-password v-model="form.oldPassword" :placeholder="$t('profile.placeCurrentPassword')" allow-clear />
             </a-form-item>
-            <a-form-item field="newPassword" label="新密码">
-              <a-input-password v-model="form.newPassword" placeholder="至少 8 位，包含字母与数字" allow-clear />
+            <a-form-item field="newPassword" :label="$t('profile.newPassword')">
+              <a-input-password v-model="form.newPassword" :placeholder="$t('profile.placeNewPassword')" allow-clear />
             </a-form-item>
-            <a-form-item field="confirmPassword" label="确认新密码">
-              <a-input-password v-model="form.confirmPassword" placeholder="再次输入新密码" allow-clear />
+            <a-form-item field="confirmPassword" :label="$t('profile.confirmPassword')">
+              <a-input-password v-model="form.confirmPassword" :placeholder="$t('profile.placeConfirmPassword')" allow-clear />
             </a-form-item>
             <a-space>
-              <a-button type="primary" :loading="submitting" @click="onSubmit">保存</a-button>
-              <a-button @click="onReset">重置</a-button>
+              <a-button type="primary" :loading="submitting" @click="onSubmit">{{ $t('profile.save') }}</a-button>
+              <a-button @click="onReset">{{ $t('profile.reset') }}</a-button>
             </a-space>
           </a-form>
         </a-card>
@@ -38,6 +38,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import PageContainer from '@/components/PageContainer.vue'
 import { useUiStore } from '@/store/ui'
 import { useAuthStore } from '@/store/auth'
@@ -45,6 +46,7 @@ import { profile, changePassword } from '@/api/auth'
 
 const ui = useUiStore()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const isDark = computed(() => ui.isDark)
 function toggleTheme() { ui.toggleTheme() }
@@ -63,17 +65,17 @@ async function loadProfile() {
 const formRef = ref(null)
 const submitting = ref(false)
 const form = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
-const rules = {
-  oldPassword: [{ required: true, message: '请输入当前密码' }],
+const rules = computed(() => ({
+  oldPassword: [{ required: true, message: t('profile.placeCurrentPassword') }],
   newPassword: [
-    { required: true, message: '请输入新密码' },
-    { validator: (val, cb) => { if (val && val.length < 8) cb('至少 8 位'); else cb() } },
+    { required: true, message: t('profile.placeNewPassword') },
+    { validator: (val, cb) => { if (val && val.length < 8) cb(t('profile.placeNewPassword')); else cb() } },
   ],
   confirmPassword: [
-    { required: true, message: '请再次输入新密码' },
-    { validator: (val, cb) => { if (val !== form.value.newPassword) cb('两次输入不一致'); else cb() } },
+    { required: true, message: t('profile.placeConfirmPassword') },
+    { validator: (val, cb) => { if (val !== form.value.newPassword) cb(t('profile.passwordMismatch')); else cb() } },
   ],
-}
+}))
 
 async function onSubmit() {
   const err = await formRef.value?.validate()
@@ -82,13 +84,13 @@ async function onSubmit() {
   try {
     const { data } = await changePassword({ oldPassword: form.value.oldPassword, newPassword: form.value.newPassword })
     if (data?.code === 0) {
-      Message.success('密码已更新')
+      Message.success(t('profile.updateSuccess'))
       form.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
     } else {
-      Message.error(data?.message || '更新失败')
+      Message.error(data?.message || t('profile.updateFail'))
     }
   } catch (e) {
-    Message.error(e?.response?.data?.message || e?.message || '更新失败')
+    Message.error(e?.response?.data?.message || e?.message || t('profile.updateFail'))
   } finally {
     submitting.value = false
   }

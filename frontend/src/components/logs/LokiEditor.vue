@@ -4,11 +4,11 @@
       <a-tab-pane key="builder" title="Builder">
         <a-space direction="vertical" fill>
           <div>
-            <div style="margin-bottom:6px">Label filters</div>
+            <div style="margin-bottom:6px">{{ $t('logs.labelFilters') }}</div>
             <div v-for="(f,i) in form.labelFilters" :key="i" style="display:flex; gap:8px; margin-bottom:8px; align-items:center">
-              <a-select v-model="f.label" style="width:180px" placeholder="Select label" allow-search :options="labelOptions" :loading="loadingLabels" @focus="ensureLabels" @change="onLabelChange(i)" />
+              <a-select v-model="f.label" style="width:180px" :placeholder="$t('logs.selectLabel')" allow-search :options="labelOptions" :loading="loadingLabels" @focus="ensureLabels" @change="onLabelChange(i)" />
               <a-select v-model="f.op" :options="ops" style="width:60px" />
-              <a-select v-model="valuesDraft[i]" multiple allow-search style="width:160px" placeholder="Select value" :options="valueOptions[i]" :loading="loadingValues[i]" @focus="ensureLabelValues(i)" @change="commitValues(i)" />
+              <a-select v-model="valuesDraft[i]" multiple allow-search style="width:160px" :placeholder="$t('logs.selectValue')" :options="valueOptions[i]" :loading="loadingValues[i]" @focus="ensureLabelValues(i)" @change="commitValues(i)" />
               
               <!-- + 号用于添加新行，只在最后一行显示 -->
               <a-button v-if="i === form.labelFilters.length - 1" @click="addLabelFilter" size="mini" type="outline" style="color: #1890ff; border-color: #1890ff; width: 28px; height: 28px; padding: 0;">+</a-button>
@@ -19,20 +19,20 @@
           </div>
 
           <div>
-            <div style="margin-bottom:6px">Line contains</div>
+            <div style="margin-bottom:6px">{{ $t('logs.lineContains') }}</div>
             <div style="display:flex; gap:8px; align-items:center">
-              <a-input v-model="form.contains" placeholder="Text to find" style="max-width:360px" />
+              <a-input v-model="form.contains" :placeholder="$t('logs.textToFind')" style="max-width:360px" />
             </div>
           </div>
 
           <a-collapse :default-active-key="['opt']">
-            <a-collapse-item header="Options" key="opt">
+            <a-collapse-item :header="$t('logs.options')" key="opt">
               <a-space wrap>
                 <a-descriptions :column="3" size="small" :bordered="false">
-                  <a-descriptions-item label="Type">
+                  <a-descriptions-item :label="$t('logs.type')">
                     <a-segmented v-model="form.type" :options="['Range','Instant']" />
                   </a-descriptions-item>
-                  <a-descriptions-item label="Line limit">
+                  <a-descriptions-item :label="$t('logs.lineLimit')">
                     <a-input-number v-model="form.lineLimit" :min="1" />
                   </a-descriptions-item>
                 </a-descriptions>
@@ -41,9 +41,9 @@
           </a-collapse>
 
           <a-space>
-            <a-button type="primary" @click="run">运行查询</a-button>
-            <a-button @click="$emit('history')">查询历史记录</a-button>
-            <a-button @click="emitInspectBuilder">查询检查器</a-button>
+            <a-button type="primary" @click="run">{{ $t('logs.runQuery') }}</a-button>
+            <a-button @click="$emit('history')">{{ $t('logs.queryHistory') }}</a-button>
+            <a-button @click="emitInspectBuilder">{{ $t('logs.queryInspector') }}</a-button>
           </a-space>
         </a-space>
       </a-tab-pane>
@@ -51,15 +51,15 @@
       <a-tab-pane key="code" title="Code">
         <a-input
           v-model="code"
-          placeholder="Enter a Loki query (Shift+Enter 执行)"
+          :placeholder="$t('logs.enterLokiQuery')"
           @keydown.shift.enter.prevent="runCode"
         />
         <div style="margin-top:8px">
           <a-space>
             <a-segmented v-model="form.type" :options="['Range','Instant']" />
             <a-input-number v-model="form.lineLimit" :min="1" />
-            <a-button type="primary" @click="runCode">运行查询</a-button>
-            <a-button @click="emitInspectCode">查询检查器</a-button>
+            <a-button type="primary" @click="runCode">{{ $t('logs.runQuery') }}</a-button>
+            <a-button @click="emitInspectCode">{{ $t('logs.queryInspector') }}</a-button>
           </a-space>
         </div>
       </a-tab-pane>
@@ -70,6 +70,9 @@
 import { reactive, ref } from 'vue'
 import { suggestions, labelValues } from '@/api/logs'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['run','history','inspect'])
 const props = defineProps({ datasourceId: { type: [String, Number], default: '' } })

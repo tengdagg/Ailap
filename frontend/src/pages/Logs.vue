@@ -1,18 +1,18 @@
 <template>
   <page-container>
     <div style="margin-bottom:12px; display:flex; gap:12px; align-items:center">
-      <span>数据源</span>
+      <span>{{ $t('logs.datasource') }}</span>
       <a-select v-model="datasource" :options="dsOptions" style="width:200px" />
-      <a-select v-if="datasource==='loki' && lokiDsOptions.length > 1" v-model="selectedLokiId" :options="lokiDsOptions" style="width:200px" placeholder="选择 Loki 数据源" />
-      <a-select v-if="datasource==='elasticsearch' && esDsOptions.length > 1" v-model="selectedEsId" :options="esDsOptions" style="width:200px" placeholder="选择 ES 数据源" />
-      <a-select v-if="datasource==='victorialogs' && vlDsOptions.length > 1" v-model="selectedVlId" :options="vlDsOptions" style="width:200px" placeholder="选择 VictoriaLogs 数据源" />
+      <a-select v-if="datasource==='loki' && lokiDsOptions.length > 1" v-model="selectedLokiId" :options="lokiDsOptions" style="width:200px" :placeholder="$t('logs.selectLoki')" />
+      <a-select v-if="datasource==='elasticsearch' && esDsOptions.length > 1" v-model="selectedEsId" :options="esDsOptions" style="width:200px" :placeholder="$t('logs.selectES')" />
+      <a-select v-if="datasource==='victorialogs' && vlDsOptions.length > 1" v-model="selectedVlId" :options="vlDsOptions" style="width:200px" :placeholder="$t('logs.selectVL')" />
       <a-segmented v-model="mode" :options="['Builder','Code']" v-if="datasource!=='victorialogs'" />
       <a-segmented v-model="mode" :options="['Code']" v-else disabled />
-      <span>Range</span>
+      <span>{{ $t('logs.range') }}</span>
       <a-select v-model="range" :options="rangeOptions" style="width:140px" />
-      <span>Step</span>
+      <span>{{ $t('logs.step') }}</span>
       <a-input v-model="step" placeholder="60s" style="width:100px" />
-      <span>Direction</span>
+      <span>{{ $t('logs.direction') }}</span>
       <a-select v-model="direction" :options="['BACKWARD','FORWARD']" style="width:120px" />
     </div>
 
@@ -21,7 +21,7 @@
     <victoria-logs-editor v-else-if="datasource==='victorialogs'" :datasource-id="selectedVlId" @run="onRunVL" @history="openHistory" @inspect="openInspector" />
 
     <div v-if="rows.length > 0 && viewMode==='logs'" style="margin-top:12px">
-      <div style="margin-bottom:8px; color: var(--color-text-3);">查询结果: {{ rows.length }} 条记录</div>
+      <div style="margin-bottom:8px; color: var(--color-text-3);">{{ $t('logs.queryResults', { count: rows.length }) }}</div>
 
       <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 360px);">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -29,12 +29,12 @@
             <tr>
               <th style="padding: 8px 12px; text-align: left; font-weight: 500; width: 180px; border-right: 1px solid var(--color-border-2);">
                 <div style="display:flex; align-items:center; justify-content:space-between">
-                  时间
+                  {{ $t('logs.time') }}
                   <a-popover trigger="click" position="bottom">
                     <icon-filter :style="{ color: filters.time ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
                     <template #content>
                       <div style="width:200px">
-                        <a-input v-model="filters.time" placeholder="搜索时间..." size="small" allow-clear />
+                        <a-input v-model="filters.time" :placeholder="$t('logs.searchTime')" size="small" allow-clear />
                       </div>
                     </template>
                   </a-popover>
@@ -42,12 +42,12 @@
               </th>
               <th style="padding: 8px 12px; text-align: left; font-weight: 500;">
                 <div style="display:flex; align-items:center; justify-content:space-between">
-                  日志内容
+                  {{ $t('logs.content') }}
                   <a-popover trigger="click" position="bottom">
                     <icon-filter :style="{ color: filters.content ? 'rgb(var(--primary-6))' : 'var(--color-text-3)', cursor: 'pointer' }" />
                     <template #content>
                       <div style="width:250px">
-                        <a-input v-model="filters.content" placeholder="搜索日志内容..." size="small" allow-clear />
+                        <a-input v-model="filters.content" :placeholder="$t('logs.searchContent')" size="small" allow-clear />
                       </div>
                     </template>
                   </a-popover>
@@ -79,17 +79,17 @@
       </div>
       <div v-if="rows.length > pageSize" style="margin-top: 16px; text-align: center;">
         <a-space>
-          <a-button @click="prevPage" :disabled="currentPage === 1" size="small">上一页</a-button>
+          <a-button @click="prevPage" :disabled="currentPage === 1" size="small">{{ $t('logs.prevPage') }}</a-button>
           <span style="margin: 0 16px; font-size: 14px;">
-            第 {{ currentPage }} / {{ totalPages }} 页，共 {{ rows.length }} 条
+            {{ $t('logs.pageInfo', { current: currentPage, total: totalPages, count: rows.length }) }}
           </span>
-          <a-button @click="nextPage" :disabled="currentPage === totalPages" size="small">下一页</a-button>
+          <a-button @click="nextPage" :disabled="currentPage === totalPages" size="small">{{ $t('logs.nextPage') }}</a-button>
         </a-space>
       </div>
     </div>
 
     <div v-else-if="rows.length > 0 && viewMode==='raw'" style="margin-top:12px">
-      <div style="margin-bottom:8px; color: var(--color-text-3);">Raw Data: {{ rows.length }} 条记录</div>
+      <div style="margin-bottom:8px; color: var(--color-text-3);">{{ $t('logs.rawData', { count: rows.length }) }}</div>
       <div style="border: 1px solid var(--color-border-2); border-radius: 4px; overflow: auto; max-height: calc(100vh - 320px);">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
           <thead style="background: var(--color-fill-2); border-bottom: 1px solid var(--color-border-2); position: sticky; top: 0; z-index: 1;">
@@ -108,7 +108,7 @@
       </div>
     </div>
     <div v-else-if="!loading" style="margin-top:12px; padding:20px; text-align:center; color:var(--color-text-3); border:1px dashed var(--color-border-2); border-radius:4px">
-      暂无查询结果，请点击"运行查询"执行查询
+      {{ $t('logs.noResults') }}
     </div>
 
      <!-- 历史记录抽屉 -->
@@ -117,7 +117,7 @@
       <div style="margin-bottom: 12px;">
         <a-input
           v-model="searchKeyword"
-          placeholder="搜索查询历史..."
+          :placeholder="$t('logs.searchHistory')"
           allow-clear
           @input="onSearchInput"
         >
@@ -129,13 +129,13 @@
       
       <div style="margin-bottom: 16px;">
         <a-tabs v-model:active-key="historyTab" type="line">
-          <a-tab-pane key="recent" title="查询历史记录" />
-          <a-tab-pane key="favorite" title="已收藏查询" />
+          <a-tab-pane key="recent" :title="$t('logs.historyTitle')" />
+          <a-tab-pane key="favorite" :title="$t('logs.favoriteTitle')" />
         </a-tabs>
       </div>
 
       <div v-if="historyItems.length === 0" style="text-align: center; padding: 40px; color: var(--color-text-3);">
-        {{ historyTab === 'favorite' ? '暂无收藏的查询' : '暂无查询历史' }}
+        {{ historyTab === 'favorite' ? $t('logs.noFavorites') : $t('logs.noHistory') }}
       </div>
       
       <div v-else style="max-height: 280px; overflow-y: auto;">
@@ -152,7 +152,7 @@
             
             <!-- 操作按钮组 -->
             <div style="display: flex; gap: 4px;">
-              <a-tooltip content="编辑备注">
+              <a-tooltip :content="$t('logs.editNote')">
                 <a-button 
                   size="mini" 
                   type="text" 
@@ -162,7 +162,7 @@
                   <icon-tag style="color: var(--color-primary-6) !important;" />
                 </a-button>
               </a-tooltip>
-              <a-tooltip content="删除记录">
+              <a-tooltip :content="$t('common.delete')">
                 <a-button 
                   size="mini" 
                   type="text" 
@@ -172,7 +172,7 @@
                   <icon-delete style="color: #f53f3f !important;" />
                 </a-button>
               </a-tooltip>
-              <a-tooltip :content="item.isFavorite ? '取消收藏' : '添加收藏'">
+              <a-tooltip :content="item.isFavorite ? $t('logs.removeFavorite') : $t('logs.addFavorite')">
                 <a-button 
                   size="mini" 
                   type="text" 
@@ -183,7 +183,7 @@
                   <icon-star v-else style="color: var(--color-text-3);" />
                 </a-button>
               </a-tooltip>
-              <a-tooltip content="执行查询">
+              <a-tooltip :content="$t('logs.runQuery')">
                 <a-button 
                   size="mini" 
                   type="text" 
@@ -209,17 +209,17 @@
     </a-drawer>
 
     <!-- 备注编辑模态框 -->
-    <a-modal v-model:visible="noteModalVisible" title="编辑备注" @ok="saveNote" @cancel="cancelNote">
+    <a-modal v-model:visible="noteModalVisible" :title="$t('logs.editNote')" @ok="saveNote" @cancel="cancelNote">
       <a-textarea 
         v-model="noteContent" 
-        placeholder="为这个查询添加备注..."
+        :placeholder="$t('logs.notePlaceholder')"
         :rows="3"
         :max-length="200"
         show-word-limit
       />
     </a-modal>
 
-    <a-modal v-model:visible="inspectVisible" title="查询检查器" :footer="false">
+    <a-modal v-model:visible="inspectVisible" :title="$t('logs.inspector')" :footer="false">
       <a-typography-paragraph copyable>
         {{ inspectUrl }}
       </a-typography-paragraph>
@@ -242,10 +242,12 @@ import VictoriaLogsEditor from '@/components/logs/VictoriaLogsEditor.vue'
 import { queryLogs, history as apiHistory, inspect, toggleFavorite, updateNote, deleteHistory } from '@/api/logs'
 import { listDataSources } from '@/api/datasources'
 import { Message, Modal } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import { IconTag, IconDelete, IconStar, IconStarFill, IconSend, IconSearch, IconFilter } from '@arco-design/web-vue/es/icon'
 import LogAnalysisChat from '@/components/LogAnalysisChat.vue'
 
-const datasource = ref('')
+  const { t } = useI18n()
+  const datasource = ref('')
 watch(datasource, () => {
   rows.value = []
   viewMode.value = 'logs'
@@ -440,14 +442,14 @@ async function onRunLoki(payload) {
   // Validation
   if (payload.mode === 'code') {
     if (!payload.query || !payload.query.trim()) {
-      Message.warning('请输入查询语句')
+      Message.warning(t('logs.inputQuery'))
       return
     }
   } else if (payload.mode === 'builder') {
     const hasFilter = payload.builder.labelFilters.some(f => f.label && f.values && f.values.length > 0)
     const hasContains = payload.builder.contains && payload.builder.contains.trim()
     if (!hasFilter && !hasContains) {
-      Message.warning('请选择查询条件')
+      Message.warning(t('logs.selectCondition'))
       return
     }
   }
@@ -457,7 +459,7 @@ async function onRunLoki(payload) {
 async function onRunES(payload) {
   // Validation
   if (!payload.query || !payload.query.trim()) {
-    Message.warning('请输入查询语句')
+    Message.warning(t('logs.inputQuery'))
     return
   }
   viewMode.value = payload?.mode === 'raw' ? 'raw' : 'logs'
@@ -466,7 +468,7 @@ async function onRunES(payload) {
 
 async function onRunVL(payload) {
     if (!payload.query || !payload.query.trim()) {
-        Message.warning('请输入查询语句')
+        Message.warning(t('logs.inputQuery'))
         return
     }
     viewMode.value = 'logs'
@@ -613,12 +615,12 @@ async function saveNote() {
     const { data } = await updateNote(currentEditItem.value.id, noteContent.value)
     if (data?.code === 0) {
       currentEditItem.value.note = noteContent.value
-      Message.success('备注保存成功')
+      Message.success(t('common.saveSuccess'))
       noteModalVisible.value = false
     }
   } catch (error) {
     console.error('Failed to save note:', error)
-    Message.error('保存备注失败')
+    Message.error(t('common.saveFail'))
   }
 }
 
@@ -632,8 +634,8 @@ function cancelNote() {
 // 确认删除
 function confirmDelete(item) {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除这条查询记录吗？此操作不可恢复。',
+    title: t('common.deleteConfirm'),
+    content: t('logs.confirmDeleteHist'),
     onOk: () => deleteHistoryItem(item)
   })
 }
@@ -643,12 +645,12 @@ async function deleteHistoryItem(item) {
   try {
     const { data } = await deleteHistory(item.id)
     if (data?.code === 0) {
-      Message.success('删除成功')
+      Message.success(t('common.deleteSuccess'))
       await loadHistoryData() // 重新加载数据
     }
   } catch (error) {
     console.error('Failed to delete history:', error)
-    Message.error('删除失败')
+    Message.error(t('common.deleteFail'))
   }
 }
 
@@ -695,10 +697,10 @@ async function executeQuery(item) {
     rows.value = data?.data?.items || []
     currentPage.value = 1
     
-    Message.success('查询执行成功')
+    Message.success(t('logs.querySuccess'))
   } catch (error) {
     console.error('Execute query error:', error)
-    Message.error('查询执行失败')
+    Message.error(t('logs.queryFail'))
   } finally {
     loading.value = false
   }

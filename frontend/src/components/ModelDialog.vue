@@ -1,7 +1,7 @@
 <template>
-  <a-modal v-model:visible="innerVisible" title="模型">
+  <a-modal v-model:visible="innerVisible" :title="$t('models.model')">
     <a-form :model="model" layout="vertical">
-      <a-form-item field="name" label="名称">
+      <a-form-item field="name" :label="$t('common.name')">
         <a-input v-model="model.name" />
       </a-form-item>
       <a-form-item field="version" label="版本">
@@ -9,8 +9,8 @@
       </a-form-item>
     </a-form>
     <template #footer>
-      <a-button @click="innerVisible=false">取消</a-button>
-      <a-button type="primary" @click="$emit('save', model)">保存</a-button>
+      <a-button @click="innerVisible=false">{{ $t('common.cancel') }}</a-button>
+      <a-button type="primary" @click="$emit('save', model)">{{ $t('common.save') }}</a-button>
     </template>
   </a-modal>
 </template>

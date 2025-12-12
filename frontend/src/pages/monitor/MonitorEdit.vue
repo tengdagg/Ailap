@@ -1,44 +1,44 @@
 <template>
   <div class="monitor-edit">
     <a-form :model="form" @submit="onSubmit" layout="vertical" class="form-content">
-      <a-form-item field="name" label="任务名称" required>
-        <a-input v-model="form.name" placeholder="请输入任务名称" />
+      <a-form-item field="name" :label="$t('monitor.taskName')" required>
+        <a-input v-model="form.name" :placeholder="$t('monitor.placeName')" />
       </a-form-item>
       
-      <a-form-item field="datasourceId" label="数据源" required>
-        <a-select v-model="form.datasourceId" placeholder="选择数据源" @change="onDatasourceChange">
+      <a-form-item field="datasourceId" :label="$t('monitor.datasource')" required>
+        <a-select v-model="form.datasourceId" :placeholder="$t('monitor.placeDs')" @change="onDatasourceChange">
           <a-option v-for="ds in datasources" :key="ds.id" :value="String(ds.id)" :label="ds.name + ' (' + ds.type + ')'" />
         </a-select>
       </a-form-item>
 
-      <a-form-item field="cron" label="Cron表达式" required help="支持 @every 格式或标准 Cron。例如: @every 1m (每分钟), @every 1h30m (每1.5小时), 0 30 * * * * (每小时30分), 0 0 12 * * * (每天中午12点)">
+      <a-form-item field="cron" :label="$t('monitor.cron')" required :help="$t('monitor.helpCron')">
         <a-input v-model="form.cron" placeholder="@every 1h" />
       </a-form-item>
 
-      <a-form-item field="query" label="查询语句" help="基础查询语句，如 Loki 的 {app='nginx'} 或 ES 的 service:api">
-        <a-textarea v-model="form.query" placeholder="输入基础查询..." />
+      <a-form-item field="query" :label="$t('monitor.query')" :help="$t('monitor.helpQuery')">
+        <a-textarea v-model="form.query" :placeholder="$t('monitor.placeQuery')" />
       </a-form-item>
 
-      <a-form-item field="keywords" label="监控关键词" help="逗号分隔，如: error, exception, 500. 命中任意关键词将触发告警">
-        <a-input v-model="form.keywords" placeholder="error, 500" />
+      <a-form-item field="keywords" :label="$t('monitor.keywords')" :help="$t('monitor.helpKw')">
+        <a-input v-model="form.keywords" :placeholder="$t('monitor.placeKw')" />
       </a-form-item>
 
-      <a-form-item field="channelId" label="通知渠道" required>
-        <a-select v-model="form.channelId" placeholder="选择通知渠道">
+      <a-form-item field="channelId" :label="$t('monitor.channel')" required>
+        <a-select v-model="form.channelId" :placeholder="$t('monitor.placeCh')">
           <a-option v-for="ch in channels" :key="ch.id" :value="ch.id" :label="ch.name" />
         </a-select>
       </a-form-item>
 
-      <a-form-item field="status" label="状态">
+      <a-form-item field="status" :label="$t('common.status')">
         <a-switch v-model="form.status" checked-value="active" unchecked-value="paused">
-            <template #checked>运行中</template>
-            <template #unchecked>暂停</template>
+            <template #checked>{{ $t('monitor.active') }}</template>
+            <template #unchecked>{{ $t('monitor.paused') }}</template>
         </a-switch>
       </a-form-item>
 
       <a-form-item>
-        <a-button type="primary" html-type="submit">提交</a-button>
-        <a-button @click="$router.back()" style="margin-left: 10px">取消</a-button>
+        <a-button type="primary" html-type="submit">{{ $t('common.submit') }}</a-button>
+        <a-button @click="$router.back()" style="margin-left: 10px">{{ $t('common.cancel') }}</a-button>
       </a-form-item>
     </a-form>
   </div>
@@ -48,10 +48,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const id = route.params.id
 
 const isEdit = computed(() => id && id !== 'new')
@@ -116,13 +118,13 @@ const onSubmit = async () => {
         
         const { data } = res
         if (data.code === 0) {
-            Message.success('保存成功')
+            Message.success(t('common.saveSuccess'))
             router.push('/monitors')
         } else {
             Message.error(data.message)
         }
     } catch (e) {
-        Message.error('保存失败')
+        Message.error(t('common.saveFail'))
     }
 }
 

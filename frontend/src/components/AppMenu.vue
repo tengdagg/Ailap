@@ -34,6 +34,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { 
   IconApps, 
   IconList, 
@@ -50,17 +51,19 @@ const route = useRoute()
 const router = useRouter()
 const ui = useUiStore()
 
+const { t } = useI18n()
+
 const selected = computed(() => '/' + (route.path.split('/')[1] || 'dashboard'))
 const isCollapsed = computed(() => ui.siderCollapsed)
 
-const menuItems = [
-  { key: '/dashboard', label: '仪表盘', icon: IconApps },
-  { key: '/logs', label: '日志分析', icon: IconList },
-  { key: '/models', label: '模型', icon: IconExperiment },
-  { key: '/datasources', label: '数据源', icon: IconStorage },
-  { key: '/monitors', label: '智能监控任务', icon: IconRobot },
-  { key: '/channels', label: '通知渠道', icon: IconNotification }
-]
+const menuItems = computed(() => [
+  { key: '/dashboard', label: t('menu.dashboard'), icon: IconApps },
+  { key: '/logs', label: t('menu.logs'), icon: IconList },
+  { key: '/models', label: t('menu.models'), icon: IconExperiment },
+  { key: '/datasources', label: t('menu.datasources'), icon: IconStorage },
+  { key: '/monitors', label: t('menu.monitors'), icon: IconRobot },
+  { key: '/channels', label: t('menu.channels'), icon: IconNotification }
+])
 
 function onClick(key) {
   router.push(key)

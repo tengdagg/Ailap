@@ -3,7 +3,7 @@
     <div v-if="!editingId && !creating && !preset" style="display:flex; justify-content:flex-start; align-items:center; margin-bottom: 16px;">
       <a-button type="primary" @click="openNew">
         <template #icon><icon-plus /></template>
-        添加模型
+        {{ $t('models.add') }}
       </a-button>
     </div>
 
@@ -15,16 +15,16 @@
               <img :src="getLogo(m.provider)" alt="logo" class="model-logo" />
               <span class="model-name">{{ m.name }}</span>
             </div>
-            <a-tag v-if="m.isDefault" color="arcoblue" size="small">默认</a-tag>
+            <a-tag v-if="m.isDefault" color="arcoblue" size="small">{{ $t('common.default') }}</a-tag>
           </div>
           
           <div class="model-card-body">
             <div class="info-row">
-              <span class="label">供应商：</span>
+              <span class="label">{{ $t('models.provider') }}：</span>
               <span class="value">{{ m.provider }}</span>
             </div>
             <div class="info-row">
-              <span class="label">模型：</span>
+              <span class="label">{{ $t('models.model') }}：</span>
               <span class="value">{{ m.model }}</span>
             </div>
           </div>
@@ -32,14 +32,14 @@
           <div class="model-card-footer">
             <div class="status-switch">
               <a-switch size="small" :model-value="!!m.enabled" @change="(v)=>onToggleEnabled(m, v)" />
-              <span :class="['status-text', { enabled: m.enabled }]">{{ m.enabled ? '已启用' : '已停用' }}</span>
+              <span :class="['status-text', { enabled: m.enabled }]">{{ m.enabled ? $t('common.enabled') : $t('common.disabled') }}</span>
             </div>
             
             <div class="actions">
-               <a-button size="mini" type="text" @click="setDefault(m)" :disabled="m.isDefault" v-if="!m.isDefault">设为默认</a-button>
-               <a-button size="mini" @click="startEdit(m)">编辑</a-button>
-               <a-popconfirm content="确认删除？" @ok="remove(m)">
-                 <a-button size="mini" status="danger">删除</a-button>
+               <a-button size="mini" type="text" @click="setDefault(m)" :disabled="m.isDefault" v-if="!m.isDefault">{{ $t('common.setDefault') }}</a-button>
+               <a-button size="mini" @click="startEdit(m)">{{ $t('common.edit') }}</a-button>
+               <a-popconfirm :content="$t('common.deleteConfirm')" @ok="remove(m)">
+                 <a-button size="mini" status="danger">{{ $t('common.delete') }}</a-button>
                </a-popconfirm>
             </div>
           </div>
@@ -49,8 +49,8 @@
 
     <div v-if="creating && !editingId && !preset">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <a-button type="text" @click="cancelCreate">返回列表</a-button>
-        <span style="font-weight:600">选择模型类型</span>
+        <a-button type="text" @click="cancelCreate">{{ $t('models.backToList') }}</a-button>
+        <span style="font-weight:600">{{ $t('models.selectType') }}</span>
         <div />
       </div>
       <a-grid :cols="24" :col-gap="12" :row-gap="12">
@@ -75,15 +75,17 @@
   
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import PageContainer from '@/components/PageContainer.vue'
 import { listModels, deleteModel, toggleModelEnabled, setModelDefault } from '@/api/models'
 import ModelConfigInline from '@/pages/model/ModelConfig.vue'
 
 const router = useRouter()
+const { t } = useI18n()
 const models = ref([])
 const loading = ref(false)
 const creating = ref(false)
@@ -123,20 +125,20 @@ async function onSaved(id) { await fetchList(); editingId.value = String(id); pr
 
 async function remove(m) {
   const { data } = await deleteModel(m.id)
-  if (data?.code === 0) { Message.success('已删除'); fetchList() }
-  else { Message.error(data?.message || '删除失败') }
+  if (data?.code === 0) { Message.success(t('common.deleteSuccess')); fetchList() }
+  else { Message.error(data?.message || t('common.deleteFail')) }
 }
 
 async function onToggleEnabled(m, val) {
   const { data } = await toggleModelEnabled(m.id, !!val)
-  if (data?.code === 0) { m.enabled = !!val; Message.success(val ? '已启用' : '已停用') }
-  else { Message.error(data?.message || '操作失败') }
+  if (data?.code === 0) { m.enabled = !!val; Message.success(val ? t('common.enabled') : t('common.disabled')) }
+  else { Message.error(data?.message || t('common.error')) }
 }
 
 async function setDefault(m) {
   const { data } = await setModelDefault(m.id)
-  if (data?.code === 0) { Message.success('已设为默认'); fetchList() }
-  else { Message.error(data?.message || '操作失败') }
+  if (data?.code === 0) { Message.success(t('common.success')); fetchList() }
+  else { Message.error(data?.message || t('common.error')) }
 }
 
 onMounted(fetchList)

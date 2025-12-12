@@ -1,47 +1,47 @@
 <template>
   <div class="channel-edit">
     <a-form :model="form" @submit="onSubmit" layout="vertical" class="form-content">
-      <a-form-item field="name" label="渠道名称" required>
-        <a-input v-model="form.name" placeholder="请输入渠道名称" />
+      <a-form-item field="name" :label="$t('channel.channelName')" required>
+        <a-input v-model="form.name" :placeholder="$t('channel.placeName')" />
       </a-form-item>
       
-      <a-form-item field="type" label="类型" required>
+      <a-form-item field="type" :label="$t('common.type')" required>
         <a-radio-group v-model="form.type" type="button">
             <a-radio value="webhook">Webhook</a-radio>
-            <a-radio value="email">邮件 (SMTP)</a-radio>
+            <a-radio value="email">{{ $t('channel.emailType') }}</a-radio>
         </a-radio-group>
       </a-form-item>
 
       <!-- Webhook Config -->
       <template v-if="form.type === 'webhook'">
-          <a-form-item field="config.url" label="Webhook URL" required>
+          <a-form-item field="config.url" :label="$t('channel.webhookUrl')" required>
               <a-input v-model="form.config.url" placeholder="https://example.com/webhook" />
           </a-form-item>
       </template>
 
       <!-- Email Config -->
       <template v-if="form.type === 'email'">
-           <a-form-item field="config.smtp_host" label="SMTP Host" required>
+           <a-form-item field="config.smtp_host" :label="$t('channel.smtpHost')" required>
               <a-input v-model="form.config.smtp_host" placeholder="smtp.example.com" />
           </a-form-item>
-           <a-form-item field="config.smtp_port" label="SMTP Port" required>
+           <a-form-item field="config.smtp_port" :label="$t('channel.smtpPort')" required>
               <a-input v-model="form.config.smtp_port" placeholder="587" />
           </a-form-item>
-           <a-form-item field="config.username" label="用户名" required>
+           <a-form-item field="config.username" :label="$t('channel.username')" required>
               <a-input v-model="form.config.username" />
           </a-form-item>
-           <a-form-item field="config.password" label="密码" required>
+           <a-form-item field="config.password" :label="$t('channel.password')" required>
               <a-input-password v-model="form.config.password" />
           </a-form-item>
-           <a-form-item field="config.to" label="收件人" required help="多个收件人用逗号分隔">
+           <a-form-item field="config.to" :label="$t('channel.recipients')" required :help="$t('channel.helpRecipients')">
               <a-input v-model="form.config.to" placeholder="admin@example.com" />
           </a-form-item>
       </template>
 
       <a-form-item>
-        <a-button type="primary" html-type="submit">提交</a-button>
-        <a-button @click="onTest" status="success" style="margin-left: 10px">测试</a-button>
-        <a-button @click="$router.back()" style="margin-left: 10px">取消</a-button>
+        <a-button type="primary" html-type="submit">{{ $t('common.submit') }}</a-button>
+        <a-button @click="onTest" status="success" style="margin-left: 10px">{{ $t('common.test') }}</a-button>
+        <a-button @click="$router.back()" style="margin-left: 10px">{{ $t('common.cancel') }}</a-button>
       </a-form-item>
     </a-form>
   </div>
@@ -51,10 +51,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const id = route.params.id
 
 const isEdit = computed(() => id && id !== 'new')
@@ -103,21 +105,21 @@ const onTest = async () => {
     try {
         const { data } = await request.post('/channels/test', payload)
         if (data.code === 0) {
-            Message.success('测试消息发送成功')
+            Message.success(t('common.testSuccess'))
         } else {
-            Message.error('测试失败: ' + data.message)
+            Message.error(t('common.testFail') + ': ' + data.message)
         }
     } catch (e) {
         // e is usually the axios error object; the interceptor might have handled it or rejected it
         // If 404/500, interceptor prints console.error but we want to show message
         console.error(e)
-        Message.error('请求失败，请检查后端服务是否启动')
+        Message.error(t('common.testFail'))
     }
 }
 
 const onSubmit = async () => {
     if (!form.value.name) {
-        return Message.warning('请输入渠道名称')
+        return Message.warning(t('channel.placeName'))
     }
     
     // Pack config for submission
@@ -136,7 +138,7 @@ const onSubmit = async () => {
         const { data } = res
         
         if (data.code === 0) {
-            Message.success('保存成功')
+            Message.success(t('common.saveSuccess'))
             router.push('/channels')
         } else {
             Message.error(data.message)
@@ -144,7 +146,7 @@ const onSubmit = async () => {
     } catch (e) {
         console.error(e)
         // Message is already shown by interceptor if 401/403. For others:
-        Message.error('保存失败')
+        Message.error(t('common.saveFail'))
     }
 }
 

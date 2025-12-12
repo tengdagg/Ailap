@@ -6,12 +6,12 @@
 
     <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center">
       <a-typography-text type="secondary">
-        LogsQL 查询 (例如: <code>_time:5m</code> or <code>error</code>)
-        <a href="https://docs.victoriametrics.com/victorialogs/logsql/" target="_blank" style="margin-left:8px">文档</a>
+        <span v-html="$t('logs.logsQLHelp')" />
+        <a href="https://docs.victoriametrics.com/victorialogs/logsql/" target="_blank" style="margin-left:8px">{{ $t('logs.docs') }}</a>
       </a-typography-text>
       <a-space>
-         <a-button size="small" @click="$emit('history')">历史记录 <icon-history /></a-button>
-         <a-button size="small" @click="$emit('inspect', query)">检查 Query <icon-code /></a-button>
+         <a-button size="small" @click="$emit('history')">{{ $t('logs.history') }} <icon-history /></a-button>
+         <a-button size="small" @click="$emit('inspect', query)">{{ $t('logs.inspectQuery') }} <icon-code /></a-button>
       </a-space>
     </div>
 
@@ -21,7 +21,7 @@
         v-model="query" 
         :auto-size="{minRows:3, maxRows:10}" 
         style="border:none; background:var(--color-bg-1); font-family:monospace" 
-        placeholder="Enter LogsQL query..." 
+        :placeholder="$t('logs.enterLogsQLQuery')" 
         @keydown.enter.prevent="onRun"
       />
     </div>
@@ -29,7 +29,7 @@
     <div style="margin-top:12px; display:flex; justify-content:flex-end">
       <a-button type="primary" @click="onRun">
         <template #icon><icon-play-arrow /></template>
-        运行查询
+        {{ $t('logs.runQuery') }}
       </a-button>
     </div>
   </div>
@@ -37,7 +37,10 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { IconPlayArrow, IconHistory, IconCode } from '@arco-design/web-vue/es/icon'
+
+const { t } = useI18n()
 
 const props = defineProps({
   datasourceId: String,

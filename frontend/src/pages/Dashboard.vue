@@ -12,7 +12,7 @@
               <icon-storage />
             </div>
             <div class="card-info">
-              <div class="card-label">数据源</div>
+              <div class="card-label">{{ $t('dashboard.datasources') }}</div>
               <div class="card-value">{{ stats.datasources }}</div>
             </div>
           </div>
@@ -25,7 +25,7 @@
               <icon-robot />
             </div>
             <div class="card-info">
-              <div class="card-label">AI 模型</div>
+              <div class="card-label">{{ $t('dashboard.models') }}</div>
               <div class="card-value">{{ stats.models }}</div>
             </div>
           </div>
@@ -38,7 +38,7 @@
               <icon-history />
             </div>
             <div class="card-info">
-              <div class="card-label">近期查询</div>
+              <div class="card-label">{{ $t('dashboard.recentQueries') }}</div>
               <div class="card-value">{{ stats.queries }}</div>
             </div>
           </div>
@@ -51,7 +51,7 @@
               <icon-star />
             </div>
             <div class="card-info">
-              <div class="card-label">已收藏</div>
+              <div class="card-label">{{ $t('dashboard.favorites') }}</div>
               <div class="card-value">{{ stats.favorites }}</div>
             </div>
           </div>
@@ -62,9 +62,9 @@
     <a-grid :cols="{ xs: 1, md: 24 }" :col-gap="16" :row-gap="16" style="margin-top: 16px;">
       <!-- Recent Activity -->
       <a-grid-item :span="{ xs: 24, md: 16 }">
-        <a-card title="近期活动" :bordered="false" class="activity-card" :head-style="{ fontSize: '14px' }">
+        <a-card :title="$t('dashboard.recentActivity')" :bordered="false" class="activity-card" :head-style="{ fontSize: '14px' }">
           <template #extra>
-            <a-link @click="$router.push('/logs')">查看全部</a-link>
+            <a-link @click="$router.push('/logs')">{{ $t('dashboard.viewAll') }}</a-link>
           </template>
           <a-list :bordered="false" :split="false">
             <a-list-item v-for="item in recentActivity" :key="item.id" class="activity-item">
@@ -83,7 +83,7 @@
               </template>
             </a-list-item>
             <div v-if="recentActivity.length === 0" class="empty-activity">
-              暂无近期活动
+              {{ $t('dashboard.noActivity') }}
             </div>
           </a-list>
         </a-card>
@@ -91,19 +91,19 @@
 
       <!-- Quick Actions -->
       <a-grid-item :span="{ xs: 24, md: 8 }">
-        <a-card title="快速开始" :bordered="false" class="quick-actions-card">
+        <a-card :title="$t('dashboard.quickStart')" :bordered="false" class="quick-actions-card">
           <a-space direction="vertical" fill size="large">
             <a-button long size="large" @click="$router.push('/datasources')">
               <template #icon><icon-plus /></template>
-              添加数据源
+              {{ $t('dashboard.addDataSource') }}
             </a-button>
             <a-button long size="large" @click="$router.push('/models')">
               <template #icon><icon-settings /></template>
-              配置 AI 模型
+              {{ $t('dashboard.configModels') }}
             </a-button>
             <a-button type="primary" long size="large" @click="$router.push('/logs')">
               <template #icon><icon-search /></template>
-              开始日志分析
+              {{ $t('dashboard.startAnalysis') }}
             </a-button>
           </a-space>
         </a-card>

@@ -1,7 +1,7 @@
 <template>
   <page-container>
     <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
-      <a-button type="primary" @click="$router.push('/datasources/new')">添加数据源</a-button>
+      <a-button type="primary" @click="$router.push('/datasources/new')">{{ $t('datasource.add') }}</a-button>
     </div>
     <a-alert v-if="errorMsg" type="error" :content="errorMsg" style="margin-bottom:8px" />
 
@@ -17,28 +17,31 @@
         </div>
         <div class="ds-actions">
           <a-space>
-            <a-button size="mini" @click="edit(item)">编辑</a-button>
-            <a-button size="mini" @click="test(item)">测试连接</a-button>
-            <a-popconfirm content="确认删除？" @ok="remove(item)">
-              <a-button size="mini" status="danger">删除</a-button>
+            <a-button size="mini" @click="edit(item)">{{ $t('common.edit') }}</a-button>
+            <a-button size="mini" @click="test(item)">{{ $t('common.test') }}</a-button>
+            <a-popconfirm :content="$t('common.deleteConfirm')" @ok="remove(item)">
+              <a-button size="mini" status="danger">{{ $t('common.delete') }}</a-button>
             </a-popconfirm>
           </a-space>
         </div>
       </div>
     </div>
-    <a-empty v-else description="暂无数据" />
+    <a-empty v-else :description="$t('common.noData')" />
   </page-container>
 </template>
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import PageContainer from '@/components/PageContainer.vue'
 import { listDataSources, updateDataSource, deleteDataSource, testConnection } from '@/api/datasources'
 
 import victoriaLogsIcon from '@/assets/victoriaLogs.svg?raw' // Use raw SVG content
 const lokiIconUrl = new URL(`../assets/loki.png`, import.meta.url).href
+
 const esIconUrl = new URL(`../assets/elasticsearch.png`, import.meta.url).href
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -60,14 +63,14 @@ async function fetchList() {
   try {
     const { data } = await listDataSources()
     if (data?.code !== 0) {
-      errorMsg.value = data?.message || '加载失败'
+      errorMsg.value = data?.message || t('common.error')
       rows.value = []
     } else {
       rows.value = data?.data?.items || []
       console.log('datasources items', rows.value)
     }
   } catch (e) {
-    errorMsg.value = (e && e.message) || '网络错误'
+    errorMsg.value = (e && e.message) || t('common.error')
     rows.value = []
   } finally {
     loading.value = false
@@ -89,18 +92,18 @@ function edit(record) {
   }
 }
 
-async function remove(record) { await deleteDataSource(record.id); Message.success('删除成功'); await fetchList() }
+async function remove(record) { await deleteDataSource(record.id); Message.success(t('common.deleteSuccess')); await fetchList() }
 async function test(record) {
   loading.value = true
   try {
     const { data } = await testConnection(record.id)
     if (data?.code === 0) {
-      Message.success('连接成功')
+      Message.success(t('common.testSuccess'))
     } else {
-      Message.error(data?.message || '连接失败')
+      Message.error(data?.message || t('common.testFail'))
     }
   } catch (error) {
-    Message.error(error?.response?.data?.message || error?.message || '连接失败')
+    Message.error(error?.response?.data?.message || error?.message || t('common.testFail'))
   } finally {
     loading.value = false
   }

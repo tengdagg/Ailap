@@ -2,13 +2,13 @@
   <page-container>
     <a-grid :cols="24" :col-gap="16" :row-gap="16">
       <a-grid-item :span="8">
-        <data-source-type-card :icon="icons.loki" title="Loki" description="Grafana Loki 日志系统" @click="go('loki')" />
+        <data-source-type-card :icon="icons.loki" title="Loki" :description="$t('datasource.lokiDesc')" @click="go('loki')" />
       </a-grid-item>
       <a-grid-item :span="8">
-        <data-source-type-card :icon="icons.es" title="Elasticsearch" description="Elastic 搜索与日志" @click="go('elasticsearch')" />
+        <data-source-type-card :icon="icons.es" title="Elasticsearch" :description="$t('datasource.esDesc')" @click="go('elasticsearch')" />
       </a-grid-item>
       <a-grid-item :span="8">
-        <data-source-type-card :icon="icons.victorialogs" title="VictoriaLogs" description="High-performance logs storage" @click="go('victorialogs')" />
+        <data-source-type-card :icon="icons.victorialogs" title="VictoriaLogs" :description="$t('datasource.vlDesc')" @click="go('victorialogs')" />
       </a-grid-item>
     </a-grid>
   </page-container>

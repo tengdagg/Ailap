@@ -3,12 +3,12 @@
     <a-form :model="form" layout="vertical" style="max-width:900px; margin:0 auto;">
       <a-grid :cols="24" :col-gap="12">
         <a-grid-item :span="12">
-          <a-form-item label="名称">
+          <a-form-item :label="$t('common.name')">
             <a-input v-model="form.name" />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-          <a-form-item label="供应商">
+          <a-form-item :label="$t('models.provider')">
             <a-select v-model="form.provider" :disabled="true">
               <a-option value="openai">OpenAI</a-option>
               <a-option value="deepseek">Deepseek</a-option>
@@ -17,61 +17,61 @@
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-          <a-form-item label="模型">
+          <a-form-item :label="$t('models.model')">
             <a-select v-model="form.model" :options="modelOptions" allow-search allow-create />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-            <a-form-item label="API Base">
+            <a-form-item :label="$t('common.apiBase')">
             <a-input v-model="form.apiBase" :placeholder="apiBasePlaceholder" />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="24">
-          <a-form-item label="API Key">
+          <a-form-item :label="$t('common.apiKey')">
             <a-input-password v-model="form.apiKey" />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-          <a-form-item label="Temperature">
+          <a-form-item :label="$t('common.temp')">
             <a-input-number v-model="form.temperature" :min="0" :max="2" :step="0.1" />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-          <a-form-item label="Max Tokens">
+          <a-form-item :label="$t('common.maxTokens')">
             <a-input-number v-model="form.maxTokens" :min="1" :max="32000" />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-          <a-form-item label="是否启用">
+          <a-form-item :label="$t('common.enabled')">
             <a-switch v-model="form.enabled" />
           </a-form-item>
         </a-grid-item>
         <a-grid-item :span="12">
-          <a-form-item label="设为默认">
+          <a-form-item :label="$t('common.setDefault')">
             <a-switch v-model="form.isDefault" />
           </a-form-item>
         </a-grid-item>
       </a-grid>
 
-      <a-divider>角色定义</a-divider>
+      <a-divider>{{ $t('common.roleDef') }}</a-divider>
       <a-space direction="vertical" fill>
         <div v-for="(r, idx) in roles" :key="idx" style="border:1px solid var(--color-border-2); padding:12px; border-radius:8px;">
           <a-grid :cols="24" :col-gap="8">
             <a-grid-item :span="8"><a-input v-model="r.name" placeholder="角色名，如：运维助手" /></a-grid-item>
             <a-grid-item :span="16"><a-input v-model="r.description" placeholder="角色描述" /></a-grid-item>
-            <a-grid-item :span="24" style="margin-top:8px"><a-textarea v-model="r.systemPrompt" placeholder="系统提示词" :auto-size="{minRows:2, maxRows:6}" /></a-grid-item>
+            <a-grid-item :span="24" style="margin-top:8px"><a-textarea v-model="r.systemPrompt" :placeholder="$t('common.sysPrompt')" :auto-size="{minRows:2, maxRows:6}" /></a-grid-item>
           </a-grid>
           <div style="display:flex; justify-content:flex-end; margin-top:8px">
-            <a-button size="mini" status="danger" @click="removeRole(idx)">删除</a-button>
+            <a-button size="mini" status="danger" @click="removeRole(idx)">{{ $t('common.delete') }}</a-button>
           </div>
         </div>
-        <a-button type="outline" size="small" @click="addRole">+ 新增角色</a-button>
+        <a-button type="outline" size="small" @click="addRole">+ {{ $t('common.addRole') }}</a-button>
       </a-space>
 
       <a-space style="margin-top:16px">
-        <a-button @click="$emit('back')">返回</a-button>
-        <a-button @click="onTest" :loading="testing">测试</a-button>
-        <a-button type="primary" @click="onSave" :loading="saving">保存</a-button>
+        <a-button @click="$emit('back')">{{ $t('common.return') }}</a-button>
+        <a-button @click="onTest" :loading="testing">{{ $t('common.test') }}</a-button>
+        <a-button type="primary" @click="onSave" :loading="saving">{{ $t('common.save') }}</a-button>
       </a-space>
     </a-form>
   </page-container>
@@ -82,12 +82,14 @@ import { Message } from '@arco-design/web-vue'
 import PageContainer from '@/components/PageContainer.vue'
 import { listModels, updateModel, createModel, testModel } from '@/api/models'
 import request from '@/api/request'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   modelId: { type: [String, Number], required: false },
   preset: { type: Object, required: false, default: null },
 })
 const emit = defineEmits(['back', 'saved'])
+const { t } = useI18n()
 
 const form = ref({ name: '', provider: 'openai', model: '', apiBase: '', apiKey: '', temperature: 0.7, maxTokens: 2048, enabled: true, isDefault: false })
 const roles = ref([])

@@ -4,14 +4,14 @@
       <div class="header">
         <a-button type="primary" @click="$router.push('/monitors/new')" size="small">
           <template #icon><icon-plus /></template>
-          新建任务
+          {{ $t('monitor.newTask') }}
         </a-button>
       </div>
 
       <a-table :data="items" :loading="loading" row-key="id">
         <template #columns>
-          <a-table-column title="名称" data-index="name" />
-          <a-table-column title="引擎" data-index="engine">
+          <a-table-column :title="$t('common.name')" data-index="name" />
+          <a-table-column :title="$t('common.type')" data-index="engine">
              <template #cell="{ record }">
                <a-tag color="blue" v-if="record.engine==='loki'">Loki</a-tag>
                <a-tag color="green" v-else-if="record.engine==='elasticsearch'">ES</a-tag>
@@ -19,24 +19,24 @@
                <a-tag v-else>{{ record.engine }}</a-tag>
              </template>
           </a-table-column>
-          <a-table-column title="Cron表达式" data-index="cron" />
-          <a-table-column title="关键词" data-index="keywords" />
-          <a-table-column title="状态" data-index="status">
+          <a-table-column :title="$t('monitor.cron')" data-index="cron" />
+          <a-table-column :title="$t('monitor.keywords')" data-index="keywords" />
+          <a-table-column :title="$t('common.status')" data-index="status">
              <template #cell="{ record }">
-               <a-badge :status="record.status === 'active' ? 'success' : 'warning'" :text="record.status === 'active' ? '运行中' : '已暂停'" />
+               <a-badge :status="record.status === 'active' ? 'success' : 'warning'" :text="record.status === 'active' ? $t('monitor.active') : $t('monitor.paused')" />
              </template>
           </a-table-column>
-          <a-table-column title="上次运行" data-index="lastRunAt">
+          <a-table-column :title="$t('monitor.lastRun')" data-index="lastRunAt">
              <template #cell="{ record }">
                {{ record.lastRunAt ? new Date(record.lastRunAt).toLocaleString() : '-' }}
              </template>
           </a-table-column>
-          <a-table-column title="操作">
+          <a-table-column :title="$t('common.actions')">
             <template #cell="{ record }">
               <a-space>
-                <a-button size="small" @click="$router.push(`/monitors/${record.id}`)">编辑</a-button>
-                <a-popconfirm content="确定删除吗?" @ok="doDelete(record.id)">
-                  <a-button size="small" status="danger">删除</a-button>
+                <a-button size="small" @click="$router.push(`/monitors/${record.id}`)">{{ $t('common.edit') }}</a-button>
+                <a-popconfirm :content="$t('common.confirm') + '?'" @ok="doDelete(record.id)">
+                  <a-button size="small" status="danger">{{ $t('common.delete') }}</a-button>
                 </a-popconfirm>
               </a-space>
             </template>
@@ -50,10 +50,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 
 const items = ref([])
 const loading = ref(false)
+const { t } = useI18n()
 
 const loadData = async () => {
   loading.value = true
@@ -73,13 +75,13 @@ const doDelete = async (id) => {
   try {
     const { data } = await request.delete(`/monitors/${id}`)
     if (data.code === 0) {
-        Message.success('删除成功')
+        Message.success(t('common.deleteSuccess'))
         loadData()
     } else {
         Message.error(data.message)
     }
   } catch (e) {
-      Message.error('删除失败')
+      Message.error(t('common.deleteFail'))
   }
 }
 

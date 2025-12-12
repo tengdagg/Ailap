@@ -18,6 +18,14 @@ AILAP is a modern log analysis platform built with Go and Vue 3, designed to pro
 - **Interactive Chat**: Provides a ChatGPT-like interface for context-aware questions about specific logs.
 - **Dynamic Avatar**: The AI assistant's avatar automatically syncs with the currently configured default model's icon.
 
+### 🚨 Smart Monitoring & Alerts
+- **Task Management**: Create and manage scheduled monitoring tasks using Cron expressions.
+- **Multi-Channel Notifications**: Support for Webhook and SMTP Email notifications.
+- **Keyword Detection**: Automatically trigger alerts based on log keywords (e.g., "error", "exception").
+
+### 🌐 Internationalization
+- **Multi-language Support**: Switch seamlessly between English and Chinese (Simp).
+
 ### 🔌 Models & Data Sources
 - **Model Management**: Supports configuration for various LLM interfaces like OpenAI, Deepseek, Qwen, etc.
 - **Data Source Configuration**: Visual management of log data sources with connectivity testing.

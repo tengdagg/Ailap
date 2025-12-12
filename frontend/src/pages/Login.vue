@@ -3,15 +3,15 @@
     <div class="login-card">
       <div class="login-header">
         <img src="@/assets/logo.png" alt="Logo" class="login-logo" />
-        <h2 class="login-title">AILAP 智能分析平台</h2>
-        <p class="login-subtitle">欢迎回来，请登录您的账户</p>
+        <h2 class="login-title">{{ $t('login.title') }}</h2>
+        <p class="login-subtitle">{{ $t('login.subtitle') }}</p>
       </div>
       
       <a-form :model="form" @submit-prevent="onSubmit" layout="vertical" class="login-form">
         <a-form-item field="username" hide-label>
           <a-input 
             v-model="form.username" 
-            placeholder="用户名" 
+            :placeholder="$t('login.username')" 
             size="large"
             allow-clear
           >
@@ -24,7 +24,7 @@
         <a-form-item field="password" hide-label>
           <a-input-password 
             v-model="form.password" 
-            placeholder="密码" 
+            :placeholder="$t('login.password')" 
             size="large"
             allow-clear
           >
@@ -44,7 +44,7 @@
             class="login-button"
             @click="onSubmit"
           >
-            登录
+            {{ $t('login.loginBtn') }}
           </a-button>
         </div>
       </a-form>
@@ -56,12 +56,14 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/store/auth'
 import { login } from '@/api/auth'
 import { IconUser, IconLock } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)

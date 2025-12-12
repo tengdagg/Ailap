@@ -14,12 +14,15 @@ try {
   document.documentElement.classList.toggle('arco-theme-dark', isDark)
   document.body.setAttribute('arco-theme', isDark ? 'dark' : 'light')
   document.documentElement.setAttribute('arco-theme', isDark ? 'dark' : 'light')
-} catch (_) {}
+} catch (_) { }
+
+import i18n from './locale'
 
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(ArcoVue)
+app.use(i18n)
 app.mount('#app')
 
 

@@ -1,6 +1,6 @@
 <template>
   <div class="log-analysis-chat">
-    <a-tooltip content="AI 智能分析" position="left">
+    <a-tooltip :content="$t('chat.tooltip')" position="left">
       <a-button
         class="chat-trigger"
         type="primary"
@@ -15,7 +15,7 @@
 
     <a-drawer
       v-model:visible="visible"
-      title="AI 日志分析助手"
+      :title="$t('chat.title')"
       placement="right"
       width="450px"
       :drawer-style="{ top: '10%', height: '90%', borderRadius: '16px 0 0 16px' }"
@@ -27,12 +27,12 @@
           <div v-if="messages.length === 0" class="empty-state">
             <img v-if="defaultModelLogo" :src="defaultModelLogo" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 16px;" />
             <icon-robot v-else :style="{ fontSize: '48px', color: 'var(--color-text-3)' }" />
-            <p>你好！我是你的日志分析助手。</p>
-            <p>我可以帮你分析当前的 {{ logs.length }} 条日志，找出潜在问题。</p>
+            <p>{{ $t('chat.intro') }}</p>
+            <p>{{ $t('chat.help', { count: logs.length }) }}</p>
             <div class="quick-actions">
-              <a-tag clickable @click="sendPrompt('请分析这些日志中的异常情况')">分析异常</a-tag>
-              <a-tag clickable @click="sendPrompt('总结这些日志的主要内容')">总结内容</a-tag>
-              <a-tag clickable @click="sendPrompt('提取这些日志中的关键错误信息')">提取错误</a-tag>
+              <a-tag clickable @click="sendPrompt($t('chat.promptAnomaly'))">{{ $t('chat.actionAnomaly') }}</a-tag>
+              <a-tag clickable @click="sendPrompt($t('chat.promptSummary'))">{{ $t('chat.actionSummary') }}</a-tag>
+              <a-tag clickable @click="sendPrompt($t('chat.promptError'))">{{ $t('chat.actionError') }}</a-tag>
             </div>
           </div>
 
@@ -63,7 +63,7 @@
             </div>
             <div class="content">
               <div class="bubble loading">
-                <icon-loading /> 正在分析中...
+                <icon-loading /> {{ $t('chat.loading') }}
               </div>
             </div>
           </div>
@@ -72,7 +72,7 @@
         <div class="input-area">
           <a-textarea
             v-model="inputContent"
-            placeholder="输入你的问题..."
+            :placeholder="$t('chat.placeholder')"
             :auto-size="{ minRows: 3, maxRows: 6 }"
             @keydown.enter.prevent="handleEnter"
           />
@@ -87,6 +87,7 @@
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { IconRobot, IconUser, IconSend, IconLoading } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { analyzeLogs } from '@/api/ai'
@@ -104,6 +105,7 @@ const props = defineProps({
   }
 })
 
+const { t } = useI18n()
 const visible = ref(false)
 const inputContent = ref('')
 const loading = ref(false)
@@ -143,7 +145,7 @@ watch(visible, (val) => {
     loading.value = false
     messages.value.push({
       role: 'assistant',
-      content: '分析已取消',
+      content: t('chat.cancel'),
       time: new Date().toLocaleTimeString()
     })
   }
