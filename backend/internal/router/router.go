@@ -9,6 +9,7 @@ import (
 	"ailap-backend/internal/database"
 	"ailap-backend/internal/handler"
 	"ailap-backend/internal/middleware"
+	"ailap-backend/internal/service"
 )
 
 func New() *gin.Engine {
@@ -65,6 +66,24 @@ func New() *gin.Engine {
 		ds.POST(":id/test", dsHandler.Test) // optional test by id (requires auth)
 		ai := api.Group("/ai")
 		ai.POST("/analyze-logs", aiHandler.AnalyzeLogs)
+
+		monitorSvc := service.NewMonitorService()
+		monitorHandler := handler.NewMonitorHandler(monitorSvc)
+
+		monGroup := api.Group("/monitors")
+		monGroup.GET("", monitorHandler.ListMonitors)
+		monGroup.POST("", monitorHandler.CreateMonitor)
+		monGroup.GET(":id", monitorHandler.GetMonitor)
+		monGroup.PUT(":id", monitorHandler.UpdateMonitor)
+		monGroup.DELETE(":id", monitorHandler.DeleteMonitor)
+
+		chanGroup := api.Group("/channels")
+		chanGroup.GET("", monitorHandler.ListChannels)
+		chanGroup.POST("", monitorHandler.CreateChannel)
+		chanGroup.GET(":id", monitorHandler.GetChannel)
+		chanGroup.PUT(":id", monitorHandler.UpdateChannel)
+		chanGroup.DELETE(":id", monitorHandler.DeleteChannel)
+		chanGroup.POST("/test", monitorHandler.TestChannel)
 	}
 
 	// Serve static files

@@ -1,6 +1,6 @@
 <template>
   <page-container>
-    <a-form ref="formRef" :model="form" :rules="rules" layout="vertical" style="max-width:900px">
+    <a-form ref="formRef" :model="form" :rules="rules" layout="vertical" style="max-width:900px; margin:0 auto;">
       <a-form-item label="名称" field="name" required>
         <a-input v-model="form.name" />
       </a-form-item>

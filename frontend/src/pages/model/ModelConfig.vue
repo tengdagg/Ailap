@@ -1,6 +1,6 @@
 <template>
   <page-container>
-    <a-form :model="form" layout="vertical" style="max-width:900px">
+    <a-form :model="form" layout="vertical" style="max-width:900px; margin:0 auto;">
       <a-grid :cols="24" :col-gap="12">
         <a-grid-item :span="12">
           <a-form-item label="名称">

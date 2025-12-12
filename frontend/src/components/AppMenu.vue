@@ -39,6 +39,8 @@ import {
   IconList, 
   IconExperiment, 
   IconStorage,
+  IconRobot,
+  IconNotification,
   IconMenuFold,
   IconMenuUnfold
 } from '@arco-design/web-vue/es/icon'
@@ -53,9 +55,11 @@ const isCollapsed = computed(() => ui.siderCollapsed)
 
 const menuItems = [
   { key: '/dashboard', label: '仪表盘', icon: IconApps },
-  { key: '/logs', label: '日志', icon: IconList },
+  { key: '/logs', label: '日志分析', icon: IconList },
   { key: '/models', label: '模型', icon: IconExperiment },
-  { key: '/datasources', label: '数据源', icon: IconStorage }
+  { key: '/datasources', label: '数据源', icon: IconStorage },
+  { key: '/monitors', label: '智能监控任务', icon: IconRobot },
+  { key: '/channels', label: '通知渠道', icon: IconNotification }
 ]
 
 function onClick(key) {

@@ -29,7 +29,7 @@ func Init() error {
 	}
 	db = gdb
 
-	if err := db.AutoMigrate(&model.User{}, &model.MLModel{}, &model.DataSource{}, &model.LogQueryHistory{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.MLModel{}, &model.DataSource{}, &model.LogQueryHistory{}, &model.LogMonitor{}, &model.NotificationChannel{}); err != nil {
 		return err
 	}
 
