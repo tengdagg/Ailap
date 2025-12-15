@@ -21,7 +21,7 @@ export default {
         actions: 'Actions',
         name: 'Name',
         status: 'Status',
-        type: 'Type',
+        type: 'DataType',
         description: 'Description',
         success: 'Success',
         failed: 'Failed',
@@ -83,7 +83,6 @@ export default {
         maxTokens: 'Max Tokens',
         apiBase: 'API Base',
         apiKeyPlaceholder: 'Enter API Key',
-
     },
     dashboard: {
         datasources: 'Data Sources',
@@ -142,6 +141,10 @@ export default {
         rawData: 'Raw Data ({count})',
         noResults: 'No results, please adjust query',
         time: 'Time',
+        engine: 'Engine',
+        mode: 'Mode',
+        query: 'Query',
+        historySubtitle: 'View recent log queries',
         content: 'Content',
         searchTime: 'Search time...',
         searchContent: 'Search content...',
@@ -171,7 +174,6 @@ export default {
         queryFail: 'Query Execution Failed',
         subtitle: 'Log Query & Analysis',
         searchPlaceholder: 'Enter keyword (Enter)',
-        runQuery: 'Run Query',
         queryHistory: 'Query History',
         queryInspector: 'Query Inspector',
         addQuery: 'Add Query',
@@ -281,5 +283,6 @@ export default {
         save: 'Save',
         reset: 'Reset',
         subtitle: 'Account & Security',
+        saveSuccess: 'Save Success！',
     },
 }

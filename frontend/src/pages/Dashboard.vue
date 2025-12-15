@@ -64,7 +64,7 @@
       <a-grid-item :span="{ xs: 24, md: 16 }">
         <a-card :title="$t('dashboard.recentAnalysis')" :bordered="false" class="activity-card" :head-style="{ fontSize: '14px' }">
           <template #extra>
-            <a-link @click="$router.push('/logs')">{{ $t('dashboard.viewAll') }}</a-link>
+            <a-link @click="$router.push('/logs/history')">{{ $t('dashboard.viewAll') }}</a-link>
           </template>
            <a-list :bordered="false" :split="false">
             <a-list-item v-for="item in recentQueries" :key="item.id" class="activity-item">
@@ -119,17 +119,21 @@
           <a-list :bordered="false" :split="false">
             <a-list-item v-for="item in recentAlerts" :key="item.id" class="activity-item" @click="openDetail(item)" style="cursor: pointer;">
               <a-list-item-meta
-                :title="item.title"
                 :description="formatTime(item.createdAt)"
               >
+                <template #title>
+                    <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                        <span style="white-space: nowrap;">{{ item.title }}</span>
+                        <div style="font-size:12px; color:var(--color-text-3); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                           {{ item.content }}
+                        </div>
+                    </div>
+                </template>
                 <template #avatar>
                    <a-avatar :size="28" shape="square" style="background-color: #f53f3f" v-if="item.status==='failed'">F</a-avatar>
                    <a-avatar :size="28" shape="square" style="background-color: #165dff" v-else>A</a-avatar>
                 </template>
               </a-list-item-meta>
-              <div style="font-size:12px; color:var(--color-text-3); margin-top:2px; line-height: 1.2; white-space: pre-wrap; max-height: 40px; overflow: hidden; text-overflow: ellipsis;">
-                 {{ item.content }}
-              </div>
             </a-list-item>
             <div v-if="recentAlerts.length === 0" class="empty-activity">
               {{ $t('dashboard.noActivity') }}
@@ -352,10 +356,9 @@ function formatTime(timeStr) {
   transition: background-color 0.2s;
 }
 
-.activity-item:hover {
+ .activity-item:hover {
   background-color: var(--color-fill-1);
-  margin: 0 -12px;
-  padding: 5px 12px;
+  padding: 10px 12px;
   border-radius: 8px;
 }
 
@@ -367,6 +370,11 @@ function formatTime(timeStr) {
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text-1);
+}
+
+.activity-item :deep(.arco-list-item-meta) {
+  margin-left: 10px;
+  padding: 8px 0;
 }
 
 .activity-item :deep(.arco-list-item-meta-description) {
@@ -409,5 +417,10 @@ function formatTime(timeStr) {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(22, 93, 255, 0.25);
 }
+
+.activity-card :deep(.arco-list-content-wrapper .arco-list-content .arco-list-item) {
+    padding: 0 0 !important;
+}
+
 </style>
 

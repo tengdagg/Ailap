@@ -28,6 +28,7 @@ const router = createRouter({
         { path: '', redirect: '/dashboard' },
         { path: 'dashboard', component: Dashboard, meta: { locale: 'menu.dashboard', localeSubtitle: 'dashboard.subtitle' } },
         { path: 'logs', component: Logs, meta: { locale: 'menu.logs', localeSubtitle: 'logs.subtitle' } },
+        { path: 'logs/history', component: () => import('@/pages/logs/LogHistory.vue'), meta: { locale: 'logs.history', localeSubtitle: 'logs.historySubtitle' } },
         { path: 'models', component: Models, meta: { locale: 'menu.models', localeSubtitle: 'models.subtitle' } },
         { path: 'datasources', component: DataSources, meta: { locale: 'menu.datasources', localeSubtitle: 'datasource.subtitle' } },
         { path: 'datasources/new', component: NewDataSource, meta: { locale: 'datasource.add', localeSubtitle: 'datasource.newSubtitle' } },
