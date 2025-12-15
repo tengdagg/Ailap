@@ -131,7 +131,7 @@
                 </template>
                 <template #avatar>
                    <a-avatar :size="28" shape="square" style="background-color: #f53f3f" v-if="item.status==='failed'">F</a-avatar>
-                   <a-avatar :size="28" shape="square" style="background-color: #165dff" v-else>A</a-avatar>
+                   <a-avatar :size="28" shape="square" style="background-color: #ff7d00" v-else>A</a-avatar>
                 </template>
               </a-list-item-meta>
             </a-list-item>

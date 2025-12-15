@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/smtp"
 	"strings"
@@ -31,23 +32,72 @@ func (s *NotificationService) SendAlert(channel *model.NotificationChannel, titl
 		if url == "" {
 			return fmt.Errorf("webhook url is empty")
 		}
-		// Generic Webhook Payload
+
+		// Webhook Logic
 		var payload interface{}
 
-		// Detect Feishu/Lark
+		// 1. Feishu / Lark (Interactive Card for Markdown)
 		if strings.Contains(url, "feishu.cn") || strings.Contains(url, "larksuite.com") {
 			payload = map[string]interface{}{
-				"msg_type": "text",
-				"content": map[string]string{
-					"text": fmt.Sprintf("%s\n\n%s\nTime: %s", title, content, time.Now().Format(time.RFC3339)),
+				"msg_type": "interactive",
+				"card": map[string]interface{}{
+					"header": map[string]interface{}{
+						"title": map[string]string{
+							"tag":     "plain_text",
+							"content": title,
+						},
+						"template": "blue", // Header color
+					},
+					"elements": []interface{}{
+						map[string]interface{}{
+							"tag": "div",
+							"text": map[string]string{
+								"tag":     "lark_md",
+								"content": fmt.Sprintf("%s\n\n**Time**: %s", content, time.Now().Format(time.RFC3339)),
+							},
+						},
+						map[string]interface{}{
+							"tag": "hr",
+						},
+						map[string]interface{}{
+							"tag": "note",
+							"elements": []interface{}{
+								map[string]string{
+									"tag":     "plain_text",
+									"content": "AILAP Intelligent Monitor",
+								},
+							},
+						},
+					},
+				},
+			}
+
+		} else if strings.Contains(url, "dingtalk.com") {
+			// 2. DingTalk (Markdown)
+			payload = map[string]interface{}{
+				"msgtype": "markdown",
+				"markdown": map[string]string{
+					"title": title,
+					"text":  fmt.Sprintf("### %s\n\n%s\n\n> Time: %s", title, content, time.Now().Format(time.RFC3339)),
+				},
+				"at": map[string]interface{}{
+					"isAtAll": false,
+				},
+			}
+		} else if strings.Contains(url, "weixin.qq.com") {
+			// 3. Enterprise WeChat (Markdown)
+			// QyWeixin markdown does not support 'title' field, only 'content'
+			payload = map[string]interface{}{
+				"msgtype": "markdown",
+				"markdown": map[string]string{
+					"content": fmt.Sprintf("# %s\n\n%s\n\n> Time: %s", title, content, time.Now().Format(time.RFC3339)),
 				},
 			}
 		} else {
-			// Generic
+			// 3. Generic (Slack-compatible or simple JSON)
+			// Try Slack format which many support
 			payload = map[string]interface{}{
-				"title":   title,
-				"content": content,
-				"time":    time.Now().Format(time.RFC3339),
+				"text": fmt.Sprintf("*%s*\n\n%s\n\nTime: %s", title, content, time.Now().Format(time.RFC3339)),
 			}
 		}
 
@@ -57,9 +107,27 @@ func (s *NotificationService) SendAlert(channel *model.NotificationChannel, titl
 			return err
 		}
 		defer resp.Body.Close()
+
+		// Read response to check for logical errors even if status is 200 (Common in DingTalk/Feishu/WeCom)
+		respBody, _ := io.ReadAll(resp.Body)
+
 		if resp.StatusCode >= 400 {
-			return fmt.Errorf("webhook returned status %d", resp.StatusCode)
+			return fmt.Errorf("webhook status %d: %s", resp.StatusCode, string(respBody))
 		}
+
+		// Check for DingTalk/WeCom error codes
+		var respData map[string]interface{}
+		if err := json.Unmarshal(respBody, &respData); err == nil {
+			// DingTalk & WeCom use 'errcode'
+			if code, ok := respData["errcode"].(float64); ok && code != 0 {
+				return fmt.Errorf("webhook error: %s", string(respBody))
+			}
+			// Feishu uses 'code'
+			if code, ok := respData["code"].(float64); ok && code != 0 {
+				return fmt.Errorf("webhook error: %s", string(respBody))
+			}
+		}
+
 		return nil
 	}
 

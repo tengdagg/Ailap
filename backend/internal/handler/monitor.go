@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -207,8 +208,8 @@ func (h *MonitorHandler) TestChannel(c *gin.Context) {
 	}
 
 	svc := service.NewNotificationService()
-	testTitle := "AILAP 测试通知"
-	testContent := "这是一条测试通知，用于验证您的通知渠道配置是否正确。"
+	testTitle := "AILAP Alert Test (测试告警)"
+	testContent := "**Status**: OK\n\nThis is a *test notification* to verify your **Markdown** configuration.\n\n- Channel: " + req.Name + "\n- Time: " + time.Now().Format("15:04:05")
 
 	if err := svc.SendAlert(&req, testTitle, testContent); err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "测试发送失败: " + err.Error()})

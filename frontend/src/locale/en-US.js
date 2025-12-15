@@ -26,6 +26,8 @@ export default {
         success: 'Success',
         failed: 'Failed',
         error: 'Error',
+        triggered: 'Triggered',
+        alert: 'Alert',
         details: 'Details',
         view: 'View',
         content: 'Content',
@@ -219,6 +221,8 @@ export default {
         newSubtitle: 'Create New Task',
         editSubtitle: 'Edit Task Config',
         time: 'Time',
+        alertDetails: 'Alarm details',
+        detailSubtitle: 'View the detailed alarm information',
     },
     channel: {
         title: 'Notification Channels',

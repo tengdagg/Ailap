@@ -16,7 +16,8 @@
           <a-table-column :title="$t('common.status')" data-index="status" :width="80">
             <template #cell="{ record }">
                <a-tag v-if="record.status === 'failed'" color="red">{{ $t('common.failed') }}</a-tag>
-               <a-tag v-else color="green">{{ $t('common.success') }}</a-tag>
+               <a-tag v-if="record.status === 'failed'" color="red">{{ $t('common.failed') }}</a-tag>
+               <a-tag v-else color="orangered">{{ $t('common.triggered') }}</a-tag>
             </template>
           </a-table-column>
           <a-table-column :title="$t('common.details')" data-index="content">
