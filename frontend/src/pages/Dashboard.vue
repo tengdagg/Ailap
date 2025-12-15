@@ -60,20 +60,20 @@
     </a-grid>
 
     <a-grid :cols="{ xs: 1, md: 24 }" :col-gap="16" :row-gap="16" style="margin-top: 16px;">
-      <!-- Recent Activity -->
+      <!-- Recent Analysis: Logs Query History -->
       <a-grid-item :span="{ xs: 24, md: 16 }">
-        <a-card :title="$t('dashboard.recentActivity')" :bordered="false" class="activity-card" :head-style="{ fontSize: '14px' }">
+        <a-card :title="$t('dashboard.recentAnalysis')" :bordered="false" class="activity-card" :head-style="{ fontSize: '14px' }">
           <template #extra>
             <a-link @click="$router.push('/logs')">{{ $t('dashboard.viewAll') }}</a-link>
           </template>
-          <a-list :bordered="false" :split="false">
-            <a-list-item v-for="item in recentActivity" :key="item.id" class="activity-item">
+           <a-list :bordered="false" :split="false">
+            <a-list-item v-for="item in recentQueries" :key="item.id" class="activity-item">
               <a-list-item-meta
                 :title="item.query || 'No query'"
                 :description="formatTime(item.createdAt)"
               >
                 <template #avatar>
-                  <a-avatar shape="square" :style="{ backgroundColor: item.engine === 'loki' ? '#165dff' : (item.engine === 'elasticsearch' ? '#00b42a' : '#ff7d00') }">
+                  <a-avatar :size="28" shape="square" :style="{ backgroundColor: item.engine === 'loki' ? '#165dff' : (item.engine === 'elasticsearch' ? '#00b42a' : '#ff7d00') }">
                     {{ item.engine === 'loki' ? 'L' : (item.engine === 'elasticsearch' ? 'E' : 'V') }}
                   </a-avatar>
                 </template>
@@ -82,7 +82,7 @@
                 <a-tag size="small">{{ item.mode }}</a-tag>
               </template>
             </a-list-item>
-            <div v-if="recentActivity.length === 0" class="empty-activity">
+            <div v-if="recentQueries.length === 0" class="empty-activity">
               {{ $t('dashboard.noActivity') }}
             </div>
           </a-list>
@@ -109,16 +109,67 @@
         </a-card>
       </a-grid-item>
     </a-grid>
+
+    <!-- Recent Activity: Monitor Alerts -->
+    <div style="margin-top: 16px;">
+        <a-card :title="$t('dashboard.recentActivity')" :bordered="false" class="activity-card" :head-style="{ fontSize: '14px' }">
+          <template #extra>
+             <a-link @click="$router.push('/monitors/alerts')">{{ $t('dashboard.viewAll') }}</a-link>
+          </template>
+          <a-list :bordered="false" :split="false">
+            <a-list-item v-for="item in recentAlerts" :key="item.id" class="activity-item" @click="openDetail(item)" style="cursor: pointer;">
+              <a-list-item-meta
+                :title="item.title"
+                :description="formatTime(item.createdAt)"
+              >
+                <template #avatar>
+                   <a-avatar :size="28" shape="square" style="background-color: #f53f3f" v-if="item.status==='failed'">F</a-avatar>
+                   <a-avatar :size="28" shape="square" style="background-color: #165dff" v-else>A</a-avatar>
+                </template>
+              </a-list-item-meta>
+              <div style="font-size:12px; color:var(--color-text-3); margin-top:2px; line-height: 1.2; white-space: pre-wrap; max-height: 40px; overflow: hidden; text-overflow: ellipsis;">
+                 {{ item.content }}
+              </div>
+            </a-list-item>
+            <div v-if="recentAlerts.length === 0" class="empty-activity">
+              {{ $t('dashboard.noActivity') }}
+            </div>
+          </a-list>
+        </a-card>
+    </div>
+
+    <a-modal v-model:visible="detailVisible" :title="currentAlert?.title || $t('common.details')" :footer="false">
+      <div v-if="currentAlert" style="white-space: pre-wrap;">
+        <div style="margin-bottom: 10px;">
+           <strong>{{ $t('monitor.time') }}:</strong> {{ formatTime(currentAlert.createdAt) }}
+        </div>
+        <div style="margin-bottom: 10px;">
+           <strong>{{ $t('monitor.taskName') }}:</strong> {{ currentAlert.monitor?.name }}
+        </div>
+        <div style="margin-bottom: 10px;" v-if="currentAlert.status === 'failed'">
+           <strong>{{ $t('common.error') }}:</strong> <span style="color: red;">{{ currentAlert.error }}</span>
+        </div>
+        <div>
+           <strong>{{ $t('common.content') }}:</strong>
+           <div style="background: var(--color-fill-2); padding: 10px; border-radius: 4px; margin-top: 5px; font-family: monospace;">
+              {{ currentAlert.content }}
+           </div>
+        </div>
+      </div>
+    </a-modal>
+
   </page-container>
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import PageContainer from '@/components/PageContainer.vue'
 import { IconStorage, IconRobot, IconHistory, IconSearch, IconPlus, IconSettings, IconStar } from '@arco-design/web-vue/es/icon'
 import { listDataSources } from '@/api/datasources'
 import { listModels } from '@/api/models'
 import { history } from '@/api/logs'
+import { listAlerts } from '@/api/monitor'
 
 const stats = reactive({
   datasources: 0,
@@ -127,7 +178,14 @@ const stats = reactive({
   favorites: 0
 })
 
-const recentActivity = ref([])
+const recentAlerts = ref([])
+const recentQueries = ref([])
+
+const router = useRouter()
+
+const openDetail = (item) => {
+    router.push(`/monitors/alerts/${item.id}`)
+}
 
 onMounted(async () => {
   try {
@@ -143,7 +201,13 @@ onMounted(async () => {
     const { data: historyData } = await history('recent')
     const items = historyData?.data?.items || []
     stats.queries = items.length
-    recentActivity.value = items.slice(0, 5) // Top 5
+    recentQueries.value = items.slice(0, 5) // Top 5
+
+    // Fetch Alert History
+    const { data: alertData } = await listAlerts()
+    if (alertData?.code === 0) {
+        recentAlerts.value = alertData.data.items.slice(0, 5) // Top 5
+    }
 
     // Fetch Favorites
     const { data: favData } = await history('favorite')
@@ -283,7 +347,7 @@ function formatTime(timeStr) {
 }
 
 .activity-item {
-  padding: 14px 0;
+  padding: 5px 0;
   border-bottom: 1px solid var(--color-border-1);
   transition: background-color 0.2s;
 }
@@ -291,7 +355,7 @@ function formatTime(timeStr) {
 .activity-item:hover {
   background-color: var(--color-fill-1);
   margin: 0 -12px;
-  padding: 14px 12px;
+  padding: 5px 12px;
   border-radius: 8px;
 }
 
@@ -308,7 +372,8 @@ function formatTime(timeStr) {
 .activity-item :deep(.arco-list-item-meta-description) {
   font-size: 12px;
   color: var(--color-text-3);
-  margin-top: 4px;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 .empty-activity {

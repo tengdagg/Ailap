@@ -108,6 +108,26 @@ func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
 }
 
+func (h *MonitorHandler) ListAlerts(c *gin.Context) {
+	var items []model.AlertHistory
+	// Get latest 50 alerts, preload Monitor info
+	if err := database.GetDB().Preload("Monitor").Order("created_at desc").Limit(50).Find(&items).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"items": items}})
+}
+
+func (h *MonitorHandler) GetAlert(c *gin.Context) {
+	id := c.Param("id")
+	var item model.AlertHistory
+	if err := database.GetDB().Preload("Monitor").First(&item, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 1, "message": "not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"item": item}})
+}
+
 // ---- Channels ----
 
 func (h *MonitorHandler) ListChannels(c *gin.Context) {

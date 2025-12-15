@@ -10,6 +10,15 @@
               <a-switch :model-value="isDark" @change="toggleTheme" />
             </a-space>
           </div>
+          <a-divider style="margin: 12px 0;" />
+          <div style="margin-bottom: 8px; font-weight: 600;">{{ $t('profile.retentionDays') }}</div>
+          <div style="font-size: 12px; color: var(--color-text-3); margin-bottom: 8px;">{{ $t('profile.retentionHelp') }}</div>
+          <a-space>
+            <a-input-number v-model="retentionDays" :min="1" :max="365" style="width: 100px" :placeholder="15">
+               <template #suffix>{{ $t('profile.days') }}</template>
+            </a-input-number>
+            <a-button type="outline" size="small" @click="saveRetention" :loading="savingRetention">{{ $t('common.save') }}</a-button>
+          </a-space>
         </a-card>
       </a-grid-item>
       <a-grid-item :span="16">
@@ -42,7 +51,7 @@ import { useI18n } from 'vue-i18n'
 import PageContainer from '@/components/PageContainer.vue'
 import { useUiStore } from '@/store/ui'
 import { useAuthStore } from '@/store/auth'
-import { profile, changePassword } from '@/api/auth'
+import { profile, changePassword, updateProfile } from '@/api/auth'
 
 const ui = useUiStore()
 const auth = useAuthStore()
@@ -52,14 +61,34 @@ const isDark = computed(() => ui.isDark)
 function toggleTheme() { ui.toggleTheme() }
 
 const userName = ref('')
+const retentionDays = ref(15)
+const savingRetention = ref(false)
+
 async function loadProfile() {
   try {
     const { data } = await profile()
     if (data?.code === 0) {
-      userName.value = data?.data?.name || '用户'
+      userName.value = data?.data?.username || data?.data?.name || '用户'
+      retentionDays.value = data?.data?.retentionDays || 15
       auth.setUser({ name: userName.value })
     }
   } catch (_) {}
+}
+
+async function saveRetention() {
+    savingRetention.value = true
+    try {
+        const { data } = await updateProfile({ retentionDays: retentionDays.value })
+        if (data?.code === 0) {
+             Message.success(t('profile.saveSuccess') || 'Saved')
+        } else {
+             Message.error(data?.message || 'Failed')
+        }
+    } catch(e) {
+         Message.error(e.message || 'Error')
+    } finally {
+        savingRetention.value = false
+    }
 }
 
 const formRef = ref(null)

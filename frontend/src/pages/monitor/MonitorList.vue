@@ -34,9 +34,9 @@
           <a-table-column :title="$t('common.actions')">
             <template #cell="{ record }">
               <a-space>
-                <a-button size="small" @click="$router.push(`/monitors/${record.id}`)">{{ $t('common.edit') }}</a-button>
+                <a-button size="mini" @click="$router.push(`/monitors/${record.id}`)">{{ $t('common.edit') }}</a-button>
                 <a-popconfirm :content="$t('common.confirm') + '?'" @ok="doDelete(record.id)">
-                  <a-button size="small" status="danger">{{ $t('common.delete') }}</a-button>
+                  <a-button size="mini" status="danger">{{ $t('common.delete') }}</a-button>
                 </a-popconfirm>
               </a-space>
             </template>
@@ -99,5 +99,9 @@ onMounted(loadData)
   background-color: var(--color-fill-2);
   font-weight: 600;
   font-size: 13px; /* Reduced font size */
+}
+:deep(.arco-table-cell) {
+    font-size: 13px;
+    color: var(--color-text-2);
 }
 </style>

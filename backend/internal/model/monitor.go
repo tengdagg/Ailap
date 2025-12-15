@@ -30,3 +30,15 @@ type LogMonitor struct {
 	LastRunAt    *time.Time `json:"lastRunAt"`
 	ProjectID    uint       `json:"projectId"` // optional, for multi-tenancy if needed
 }
+
+// AlertHistory records triggered alerts
+type AlertHistory struct {
+	ID        uint       `gorm:"primarykey" json:"id"`
+	CreatedAt time.Time  `json:"createdAt"`
+	MonitorID uint       `json:"monitorId"`
+	Monitor   LogMonitor `json:"monitor" gorm:"foreignKey:MonitorID"`
+	Title     string     `json:"title"`
+	Content   string     `json:"content"`
+	Status    string     `json:"status"` // sent, failed
+	Error     string     `json:"error"`
+}

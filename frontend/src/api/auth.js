@@ -12,13 +12,13 @@ export function profile() {
   return request.get('/auth/profile')
 }
 
-export function changePassword(payload) {
-  return request.post('/auth/change-password', payload)
+export function changePassword(data) {
+  return request.post('/auth/change-password', data)
 }
 
-
-
-
+export function updateProfile(data) {
+  return request.post('/auth/update-profile', data)
+}
 
 
 

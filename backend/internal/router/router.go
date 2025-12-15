@@ -38,6 +38,7 @@ func New() *gin.Engine {
 
 		api.Use(middleware.AuthRequired())
 		auth.POST("/change-password", authHandler.ChangePassword)
+		auth.POST("/update-profile", authHandler.UpdateProfile)
 
 		logs := api.Group("/logs")
 		logs.GET("/query", logsHandler.Query)
@@ -72,6 +73,8 @@ func New() *gin.Engine {
 
 		monGroup := api.Group("/monitors")
 		monGroup.GET("", monitorHandler.ListMonitors)
+		monGroup.GET("/alerts", monitorHandler.ListAlerts)
+		monGroup.GET("/alerts/:id", monitorHandler.GetAlert)
 		monGroup.POST("", monitorHandler.CreateMonitor)
 		monGroup.GET(":id", monitorHandler.GetMonitor)
 		monGroup.PUT(":id", monitorHandler.UpdateMonitor)

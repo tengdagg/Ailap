@@ -14,16 +14,16 @@
           <a-table-column :title="$t('common.type')" data-index="type">
               <template #cell="{ record }">
                   <a-tag v-if="record.type === 'webhook'" color="blue">Webhook</a-tag>
-                  <a-tag v-else-if="record.type === 'email'" color="arcoblue">{{ $t('channel.title') }}</a-tag>
+                  <a-tag v-else-if="record.type === 'email'" color="arcoblue">{{ $t('channel.emailType') }}</a-tag>
                   <a-tag v-else>{{ record.type }}</a-tag>
               </template>
           </a-table-column>
           <a-table-column :title="$t('common.actions')">
             <template #cell="{ record }">
               <a-space>
-                <a-button size="small" @click="$router.push(`/channels/${record.id}`)">{{ $t('common.edit') }}</a-button>
+                <a-button size="mini" @click="$router.push(`/channels/${record.id}`)">{{ $t('common.edit') }}</a-button>
                 <a-popconfirm :content="$t('common.confirm') + '?'" @ok="doDelete(record.id)">
-                  <a-button size="small" status="danger">{{ $t('common.delete') }}</a-button>
+                  <a-button size="mini" status="danger">{{ $t('common.delete') }}</a-button>
                 </a-popconfirm>
               </a-space>
             </template>
@@ -86,5 +86,9 @@ onMounted(loadData)
   background-color: var(--color-fill-2);
   font-weight: 600;
   font-size: 13px; /* Reduced font size */
+}
+:deep(.arco-table-cell) {
+    font-size: 13px;
+    color: var(--color-text-2);
 }
 </style>

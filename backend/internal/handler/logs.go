@@ -211,8 +211,20 @@ func (h *LogsHandler) LabelValues(c *gin.Context) {
 
 // History returns query history with auto cleanup
 func (h *LogsHandler) History(c *gin.Context) {
-	// Auto cleanup: remove non-favorite queries older than 14 days
-	cutoff := time.Now().AddDate(0, 0, -14)
+	// Auto cleanup: remove non-favorite queries older than retention days
+	days := 15
+
+	// Try to get user config
+	uid, exists := c.Get("userId")
+	if !exists {
+		uid = 1 // Fallback
+	}
+	var user model.User
+	if err := database.GetDB().First(&user, uid).Error; err == nil && user.RetentionDays > 0 {
+		days = user.RetentionDays
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -days)
 	database.GetDB().Where("is_favorite = ? AND created_at < ?", false, cutoff).Delete(&model.LogQueryHistory{})
 
 	queryType := c.DefaultQuery("type", "recent") // recent or favorite

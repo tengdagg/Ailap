@@ -42,6 +42,13 @@ func NewMonitorService() *MonitorService {
 	// Load active monitors on startup
 	go ms.loadJobs()
 
+	// 5. Start maintenance cron (e.g., daily cleanup)
+	// Cron 0 0 * * * = daily at midnight
+	// For testing let's enable it.
+	c.AddFunc("0 0 * * *", func() {
+		ms.CleanupHistory()
+	})
+
 	return ms
 }
 
@@ -212,12 +219,51 @@ func (s *MonitorService) ExecuteMonitor(monitorID uint) {
 
 	if err := s.notifyService.SendAlert(&channel, title, content); err != nil {
 		utils.GetLogger().Error("monitor notification failed", zap.Error(err))
+		// Record Failure
+		database.GetDB().Create(&model.AlertHistory{
+			MonitorID: m.ID,
+			Title:     title,
+			Content:   content,
+			Status:    "failed",
+			Error:     err.Error(),
+		})
 	} else {
 		utils.GetLogger().Info("monitor alert sent", zap.Uint("id", m.ID))
+		// Record Success
+		database.GetDB().Create(&model.AlertHistory{
+			MonitorID: m.ID,
+			Title:     title,
+			Content:   content,
+			Status:    "sent",
+		})
 	}
 
 	// Update LastRun
 	t := time.Now()
 	m.LastRunAt = &t
 	database.GetDB().Save(&m)
+}
+
+// CleanupHistory deletes old alert history based on retention settings
+func (s *MonitorService) CleanupHistory() {
+	var user model.User
+	// Assuming main user is ID 1 (admin)
+	if err := database.GetDB().First(&user, 1).Error; err != nil {
+		utils.GetLogger().Error("cleanup failed: cannot find admin user")
+		return
+	}
+
+	days := user.RetentionDays
+	if days <= 0 {
+		days = 15 // default fallback
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -days)
+
+	// Cleanup AlertHistory
+	if err := database.GetDB().Where("created_at < ?", cutoff).Delete(&model.AlertHistory{}).Error; err != nil {
+		utils.GetLogger().Error("failed to cleanup alert history", zap.Error(err))
+	} else {
+		utils.GetLogger().Info("alert history cleaned up", zap.Int("days", days))
+	}
 }

@@ -36,6 +36,8 @@ const router = createRouter({
         { path: 'datasources/new/victorialogs', component: VictoriaLogsConfig, meta: { locale: 'datasource.vlConfig', localeSubtitle: 'datasource.configSubtitle' } },
         { path: 'profile', component: Profile, meta: { locale: 'profile.accountInfo', localeSubtitle: 'profile.subtitle' } },
         { path: 'monitors', component: MonitorList, meta: { locale: 'menu.monitors', localeSubtitle: 'monitor.subtitle' } },
+        { path: 'monitors/alerts', component: () => import('@/pages/monitor/AlertHistory.vue'), meta: { locale: 'monitor.alertHistory', localeSubtitle: 'monitor.historySubtitle' } },
+        { path: 'monitors/alerts/:id', component: () => import('@/pages/monitor/AlertDetail.vue'), meta: { locale: 'monitor.alertDetails', localeSubtitle: 'monitor.detailSubtitle' } },
         { path: 'monitors/new', component: MonitorEdit, meta: { locale: 'monitor.newTask', localeSubtitle: 'monitor.newSubtitle' } },
         { path: 'monitors/:id', component: MonitorEdit, meta: { locale: 'monitor.editTask', localeSubtitle: 'monitor.editSubtitle' } },
         { path: 'channels', component: ChannelList, meta: { locale: 'menu.channels', localeSubtitle: 'channel.subtitle' } },
