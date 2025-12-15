@@ -17,6 +17,7 @@ AILAP 是一个基于 Go 和 Vue 3 的现代化日志分析平台，旨在提供
 - **智能分析**：集成 AI 模型对日志内容进行深度分析，快速定位异常根因。
 - **交互式对话**：提供类似 ChatGPT 的对话界面，支持针对特定日志的上下文提问。
 - **动态头像**：AI 助手头像自动同步当前使用的默认模型图标。
+![Image text](https://github.com/tengdagg/Ailap/blob/v1.0.16/img/Loganalysis.png?raw=true)
 
 ### 🔌 模型与数据源
 - **模型管理**：支持配置 OpenAI、Deepseek、Qwen 等多种大模型接口。

@@ -18,6 +18,8 @@ AILAP is a modern log analysis platform built with Go and Vue 3, designed to pro
 - **Interactive Chat**: Provides a ChatGPT-like interface for context-aware questions about specific logs.
 - **Dynamic Avatar**: The AI assistant's avatar automatically syncs with the currently configured default model's icon.
 
+![Image text](https://github.com/tengdagg/Ailap/blob/v1.0.16/img/Loganalysis.png?raw=true)
+
 ### 🚨 Smart Monitoring & Alerts
 - **Task Management**: Create and manage scheduled monitoring tasks using Cron expressions.
 - **Multi-Channel Notifications**: Support for Webhook and SMTP Email notifications.
