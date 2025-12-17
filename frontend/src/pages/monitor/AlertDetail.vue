@@ -27,7 +27,7 @@
 
           <div style="margin-top: 20px;">
             <div style="font-weight: bold; margin-bottom: 10px;">{{ $t('common.content') }}</div>
-            <div class="content-box markdown-body" v-html="renderMarkdown(alert.content)"></div>
+            <div class="content-box markdown-body" v-html="htmlContent"></div>
           </div>
         </div>
         <a-empty v-else-if="!loading" />
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import PageContainer from '@/components/PageContainer.vue'
@@ -46,6 +46,11 @@ import { getAlert } from '@/api/monitor'
 const route = useRoute()
 const loading = ref(false)
 const alert = ref(null)
+
+const htmlContent = computed(() => {
+    if (!alert.value || !alert.value.content) return ''
+    return marked.parse(alert.value.content, { breaks: true, async: false })
+})
 
 const fetchData = async () => {
   const id = route.params.id
@@ -59,18 +64,12 @@ const fetchData = async () => {
     console.error(err)
   } finally {
     loading.value = false
-    loading.value = false
   }
 }
 
 const formatTime = (iso) => {
     if(!iso) return ''
     return new Date(iso).toLocaleString()
-}
-
-const renderMarkdown = (text) => {
-    if (!text) return ''
-    return marked.parse(text)
 }
 
 onMounted(fetchData)

@@ -19,6 +19,15 @@
             </a-input-number>
             <a-button type="outline" size="small" @click="saveRetention" :loading="savingRetention">{{ $t('common.save') }}</a-button>
           </a-space>
+          <a-divider style="margin: 12px 0;" />
+          <div style="margin-bottom: 8px; font-weight: 600;">{{ $t('profile.aiAnalysisLimit') }}</div>
+          <div style="font-size: 12px; color: var(--color-text-3); margin-bottom: 8px;">{{ $t('profile.aiAnalysisLimitHelp') }}</div>
+          <a-space>
+            <a-input-number v-model="aiAnalysisLimit" :min="1000" :max="50000" style="width: 120px" :placeholder="8000">
+               <template #suffix>{{ $t('profile.chars') }}</template>
+            </a-input-number>
+            <a-button type="outline" size="small" @click="saveAILimit" :loading="savingAILimit">{{ $t('common.save') }}</a-button>
+          </a-space>
         </a-card>
       </a-grid-item>
       <a-grid-item :span="16">
@@ -63,6 +72,8 @@ function toggleTheme() { ui.toggleTheme() }
 const userName = ref('')
 const retentionDays = ref(15)
 const savingRetention = ref(false)
+const aiAnalysisLimit = ref(8000)
+const savingAILimit = ref(false)
 
 async function loadProfile() {
   try {
@@ -70,6 +81,7 @@ async function loadProfile() {
     if (data?.code === 0) {
       userName.value = data?.data?.username || data?.data?.name || '用户'
       retentionDays.value = data?.data?.retentionDays || 15
+      aiAnalysisLimit.value = data?.data?.aiAnalysisLimit || 8000
       auth.setUser({ name: userName.value })
     }
   } catch (_) {}
@@ -88,6 +100,22 @@ async function saveRetention() {
          Message.error(e.message || 'Error')
     } finally {
         savingRetention.value = false
+    }
+}
+
+async function saveAILimit() {
+    savingAILimit.value = true
+    try {
+        const { data } = await updateProfile({ aiAnalysisLimit: aiAnalysisLimit.value })
+        if (data?.code === 0) {
+             Message.success(t('profile.saveSuccess') || 'Saved')
+        } else {
+             Message.error(data?.message || 'Failed')
+        }
+    } catch(e) {
+         Message.error(e.message || 'Error')
+    } finally {
+        savingAILimit.value = false
     }
 }
 

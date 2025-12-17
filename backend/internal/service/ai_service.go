@@ -35,7 +35,12 @@ func (s *AIService) Analyze(prompt string, logs []interface{}) (string, error) {
 
 	// prepare logs snippet
 	var buf bytes.Buffer
-	limit := 8000
+	// Read user's AI analysis limit (using admin user ID 1 as system default)
+	limit := 8000 // fallback default
+	var user model.User
+	if err := database.GetDB().First(&user, 1).Error; err == nil && user.AIAnalysisLimit > 0 {
+		limit = user.AIAnalysisLimit
+	}
 	for i, row := range logs {
 		b, _ := json.Marshal(row)
 		if buf.Len()+len(b)+1 > limit {
