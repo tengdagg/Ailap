@@ -11,7 +11,7 @@ backend/coverage/
 backend/data/
 # Logs
 *.log
-
+.cursorrules
 # Env
 .env
 .env.*

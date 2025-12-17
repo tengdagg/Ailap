@@ -113,16 +113,34 @@ func (s *MonitorService) ExecuteMonitor(monitorID uint) {
 		return
 	}
 
-	// 1. Determine Time Range (based on last run or cron interval?)
-	// Simplification: query last 1 hour, or parse cron interval?
-	// For "Smart Monitoring", usually we look back 'interval' amount of time.
-	// But parsing cron to interval is hard.
-	// Let's assume we look back 1 hour by default, or maybe making it configurable?
-	// Let's try to infer from cron if it starts with "@every"? No.
-	// Hardcode lookback to 1h for now, or use a new field `Lookback` in model?
-	// Using 1h as reasonable default for periodic checks.
+	// 1. Determine Time Range dynamically from Cron
 	now := time.Now()
-	start := now.Add(-1 * time.Hour)
+	// Default fallback
+	lookback := time.Hour
+
+	// Re-create parser with same options as NewMonitorService to ensure consistency
+	parser := cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
+	schedule, err := parser.Parse(m.Cron)
+	if err == nil {
+		// Calculate interval by checking the difference between the next two scheduled times
+		next1 := schedule.Next(now)
+		next2 := schedule.Next(next1)
+		interval := next2.Sub(next1)
+
+		if interval > 0 {
+			lookback = interval
+			// Add buffering (max of 1 min or 10%) to ensure we don't miss logs at the boundary considering execution delay
+			buffer := lookback / 10
+			if buffer < time.Minute {
+				buffer = time.Minute
+			}
+			lookback += buffer
+		}
+	} else {
+		utils.GetLogger().Warn("failed to parse cron for dynamic lookback, using default 1h", zap.Uint("id", m.ID), zap.String("cron", m.Cron), zap.Error(err))
+	}
+
+	start := now.Add(-lookback)
 	end := now
 
 	startNs := fmt.Sprintf("%d", start.UnixNano())
