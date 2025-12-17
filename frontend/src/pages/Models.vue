@@ -93,9 +93,9 @@ const editingId = ref('')
 const preset = ref(null)
 
 const presets = [
-  { provider: 'deepseek', name: 'Deepseek', model: 'deepseek-chat', desc: 'Deepseek 对话模型' },
-  { provider: 'openai', name: 'OpenAI', model: 'gpt-4o-mini', desc: 'OpenAI GPT 系列模型' },
-  { provider: 'qwen', name: 'Qwen', model: 'qwen2.5' , desc: '通义千问系列模型'},
+  { provider: 'deepseek', name: 'Deepseek', model: 'deepseek-chat', desc: 'Deepseek V3 对话模型' },
+  { provider: 'openai', name: 'OpenAI', model: 'gpt-4o-mini', desc: 'OpenAI GPT-4o Mini' },
+  { provider: 'qwen', name: 'Qwen', model: 'qwen-plus' , desc: '通义千问 Plus 增强版'},
 ]
 
 function getLogo(provider) {
@@ -121,7 +121,7 @@ function choosePreset(p) { preset.value = p; creating.value = false }
 
 function startEdit(m) { editingId.value = String(m.id); preset.value = null }
 function stopEditOrCancel() { editingId.value = ''; preset.value = null; creating.value = false }
-async function onSaved(id) { await fetchList(); editingId.value = String(id); preset.value = null }
+async function onSaved(id) { await fetchList(); editingId.value = ''; preset.value = null; creating.value = false }
 
 async function remove(m) {
   const { data } = await deleteModel(m.id)

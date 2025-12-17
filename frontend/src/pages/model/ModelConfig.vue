@@ -97,24 +97,26 @@ const testing = ref(false)
 const saving = ref(false)
 
 const providerModels = {
-  // OpenAI reference: https://platform.openai.com/docs/api-reference/introduction
+  // OpenAI
   openai: [
-    { label: 'gpt-4o', value: 'gpt-4o' },
-    { label: 'gpt-4o-mini', value: 'gpt-4o-mini' },
-    { label: 'gpt-4.1', value: 'gpt-4.1' },
-    { label: 'gpt-4.1-mini', value: 'gpt-4.1-mini' },
-    { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo' },
+    { label: 'GPT-4o', value: 'gpt-4o' },
+    { label: 'GPT-4o Mini', value: 'gpt-4o-mini' },
+    { label: 'O1', value: 'o1' },
+    { label: 'GPT-4.5 Preview', value: 'gpt-4.5-preview' },
+    { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' },
+    { label: 'GPT-3.5 Turbo', value: 'gpt-3.5-turbo' },
   ],
-  // DeepSeek reference: https://api-docs.deepseek.com/zh-cn/
+  // DeepSeek
   deepseek: [
-    { label: 'deepseek-chat (V3.1 非思考)', value: 'deepseek-chat' },
-    { label: 'deepseek-reasoner (V3.1 思考)', value: 'deepseek-reasoner' },
+    { label: 'DeepSeek-V3 (Chat)', value: 'deepseek-chat' },
+    { label: 'DeepSeek-R1 (Reasoner)', value: 'deepseek-reasoner' },
   ],
   // Qwen
   qwen: [
-    { label: 'qwen2.5', value: 'qwen2.5' },
-    { label: 'qwen2.5-instruct', value: 'qwen2.5-instruct' },
-    { label: 'qwen2.5-coder', value: 'qwen2.5-coder' },
+    { label: 'Qwen-Max (旗舰)', value: 'qwen-max' },
+    { label: 'Qwen-Plus (增强)', value: 'qwen-plus' },
+    { label: 'Qwen-Turbo (快速)', value: 'qwen-turbo' },
+    { label: 'Qwen-Long (长文本)', value: 'qwen-long' },
   ],
 }
 
@@ -127,13 +129,28 @@ const providerApiBase = {
 const modelOptions = computed(() => providerModels[form.value.provider] || [])
 const apiBasePlaceholder = computed(() => providerApiBase[form.value.provider] || 'https://api.example.com/v1')
 
-watch(() => form.value.provider, (p) => {
-  // when provider changes, if current model not in list, reset
-  const list = providerModels[p] || []
-  if (!list.find(x => x.value === form.value.model)) {
-    form.value.model = list[0]?.value || ''
+watch(() => form.value.provider, (p, oldP) => {
+  if (!p) return
+  // If switching providers manually
+  if (p !== oldP && oldP) {
+    // Check if the current model value belongs to the OLD provider's list.
+    // If it does, it's a stale value from the previous selection => reset it.
+    // If it does NOT, it implies it was either just loaded (custom/valid for new provider) or is a custom value we shouldn't clobber.
+    const oldList = providerModels[oldP] || []
+    const isStale = oldList.some(item => item.value === form.value.model)
+    
+    // Also reset if empty, to provide a nice default
+    if (!form.value.model || isStale) {
+      const list = providerModels[p] || []
+      form.value.model = list[0]?.value || ''
+    }
+  } else {
+     // Initial load or same provider: trust the form value unless empty
+     if (!form.value.model) {
+        const list = providerModels[p] || []
+        form.value.model = list[0]?.value || ''
+     }
   }
-  // Do not auto-fill apiBase; show provider placeholder in grey instead
 })
 
 function addRole() { roles.value.push({ name: '', description: '', systemPrompt: '' }) }
