@@ -427,6 +427,26 @@ func FlattenLokiToRows(body []byte) []map[string]interface{} {
 	return items
 }
 
+func getNestedValue(data map[string]interface{}, path string) interface{} {
+	if path == "" {
+		return nil
+	}
+	parts := strings.Split(path, ".")
+	var current interface{} = data
+	for _, part := range parts {
+		if m, ok := current.(map[string]interface{}); ok {
+			if v, exists := m[part]; exists {
+				current = v
+			} else {
+				return nil
+			}
+		} else {
+			return nil
+		}
+	}
+	return current
+}
+
 func FlattenElasticsearchToRows(body []byte, timeField, msgField, lvlField string) []map[string]interface{} {
 	var resp struct {
 		Hits struct {
@@ -442,19 +462,22 @@ func FlattenElasticsearchToRows(body []byte, timeField, msgField, lvlField strin
 		row := make(map[string]interface{})
 		row["__raw"] = src
 
-		if t, ok := src[timeField]; ok {
+		if t := getNestedValue(src, timeField); t != nil {
+			row["timestamp"] = fmt.Sprintf("%v", t)
+		} else if t, ok := src[timeField]; ok { // Fallback to direct access if getNested returns nil (though getNested covers it_
 			row["timestamp"] = fmt.Sprintf("%v", t)
 		}
+
 		if msgField == "_source" {
 			b, _ := json.Marshal(src)
 			row["message"] = string(b)
 		} else {
-			if m, ok := src[msgField]; ok {
+			if m := getNestedValue(src, msgField); m != nil {
 				row["message"] = fmt.Sprintf("%v", m)
 			}
 		}
 		if lvlField != "" {
-			if l, ok := src[lvlField]; ok {
+			if l := getNestedValue(src, lvlField); l != nil {
 				row["level"] = fmt.Sprintf("%v", l)
 			}
 		}
