@@ -18,6 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o server cmd/main.go
 # Final Stage
 FROM alpine:latest
 WORKDIR /app
+ENV GIN_MODE=release
 
 # Install dependencies (if any needed for runtime, e.g. ca-certificates)
 RUN apk --no-cache add ca-certificates tzdata
