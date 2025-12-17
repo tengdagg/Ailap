@@ -371,30 +371,67 @@ func CreateHTTPClient(cfg map[string]interface{}, timeout time.Duration) *http.C
 // Import fix removed
 
 func ApplyAuthHeaders(req *http.Request, cfg map[string]interface{}) {
-	// Basic Auth
-	// Headers
-	// ... logic copied/adapted ...
 	if cfg == nil {
 		return
 	}
-	auth, ok := cfg["auth"].(map[string]interface{})
-	if !ok {
-		return
+
+	// Helper to safely get string
+	getString := func(m map[string]interface{}, k string) string {
+		if v, ok := m[k].(string); ok {
+			return v
+		}
+		return ""
 	}
-	method, _ := auth["method"].(string)
-	if method == "basic" {
-		user, _ := auth["username"].(string)
-		pass, _ := auth["password"].(string)
-		req.SetBasicAuth(user, pass)
+
+	// 1. Try new flat config first
+	authType := getString(cfg, "authType")
+	// If authType is set, use it. If not, check for presence of credentials directly.
+
+	// Basic Auth (Flat)
+	if authType == "basic" || (authType == "" && getString(cfg, "username") != "") {
+		user := getString(cfg, "username")
+		pass := getString(cfg, "password")
+		if user != "" {
+			req.SetBasicAuth(user, pass)
+		}
 	}
-	if h, ok := auth["headers"].(map[string]interface{}); ok {
-		for k, v := range h {
-			if s, ok := v.(string); ok {
-				req.Header.Set(k, s)
+
+	// API Key (Flat)
+	if authType == "apiKey" || (authType == "" && getString(cfg, "apiKey") != "") {
+		apiKey := getString(cfg, "apiKey")
+		if apiKey != "" {
+			req.Header.Set("Authorization", "ApiKey "+apiKey)
+		}
+	}
+
+	// Token/Bearer (Flat)
+	token := getString(cfg, "token")
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	// 2. Legacy nested config support (fallback)
+	// Only if headers not already set? Or just try if auth object exists.
+	if auth, ok := cfg["auth"].(map[string]interface{}); ok {
+		method, _ := auth["method"].(string)
+		if method == "basic" {
+			user, _ := auth["username"].(string)
+			pass, _ := auth["password"].(string)
+			// Overwrite only if not set? Or just let it run.
+			// Assuming new config takes precedence if present, but here we can just set it
+			// if potentially missing from above.
+			if _, set := req.Header["Authorization"]; !set {
+				req.SetBasicAuth(user, pass)
+			}
+		}
+		if h, ok := auth["headers"].(map[string]interface{}); ok {
+			for k, v := range h {
+				if s, ok := v.(string); ok {
+					req.Header.Set(k, s)
+				}
 			}
 		}
 	}
-	// Token?
 }
 
 // Flatten functions
