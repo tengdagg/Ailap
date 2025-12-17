@@ -225,6 +225,7 @@ export default {
         queryHistory: '查询历史',
         queryInspector: '查询检查器',
         inspectQuery: '查询检查器',
+        addQuery: '添加查询',
     },
     monitor: {
         alertHistory: '告警历史',
@@ -244,8 +245,8 @@ export default {
         placeQuery: '输入基础查询...',
         placeKw: 'error, 500',
         placeCh: '选择通知渠道',
-        helpCron: '支持 @every 格式或标准 Cron。例如: @every 1m (每分钟), @every 1h30m (每1.5小时), 0 30 * * * * (每小时30分), 0 0 12 * * * (每天中午12点)',
-        helpQuery: '基础查询语句，如 Loki 的 {app=\'nginx\'} 或 ES 的 service:api',
+        helpCron: '支持 {\'@\'}every 格式或标准 Cron。例如: {\'@\'}every 1m (每分钟), {\'@\'}every 1h30m (每1.5小时), 0 30 * * * * (每小时30分), 0 0 12 * * * (每天中午12点)',
+        helpQuery: '基础查询语句，如 Loki 的 {\'{\'}app=\'nginx\'{\'} \'} 或 ES 的 service:api',
         helpKw: '逗号分隔，如: error, exception, 500. 命中任意关键词将触发告警',
         lastRun: '上次运行',
         subtitle: '管理自动日志监控任务',
