@@ -26,6 +26,11 @@
       />
     </div>
 
+    <div style="margin-top:12px; display:flex; align-items:center; gap:12px">
+      <a-typography-text type="secondary">{{ $t('logs.lineLimit') }}</a-typography-text>
+      <a-input-number v-model="lineLimit" :min="1" :max="10000" style="width:120px" />
+    </div>
+
     <div style="margin-top:12px; display:flex; justify-content:flex-end">
       <a-button type="primary" @click="onRun">
         <template #icon><icon-play-arrow /></template>
@@ -50,11 +55,13 @@ const emit = defineEmits(['run', 'history', 'inspect'])
 
 const query = ref('*')
 const checks = ref([])
+const lineLimit = ref(1000)
 
 function onRun() {
   emit('run', {
     mode: 'code',
-    query: query.value
+    query: query.value,
+    lineLimit: lineLimit.value
   })
 }
 

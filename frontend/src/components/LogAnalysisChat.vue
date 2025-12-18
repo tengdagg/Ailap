@@ -196,15 +196,10 @@ async function sendPrompt(text) {
   currentAbortController = new AbortController()
 
   try {
-    // Prepare logs - limit to last 50 or so to avoid huge payload if not handled by backend
-    // Backend handler seems to handle truncation, but let's be safe and send a reasonable amount
-    // The backend handler says: "limit := 8000 // characters limit"
-    // So we should probably limit the number of logs we send.
-    const logsToSend = props.logs.slice(0, 100) // Send up to 100 logs
-
+    // Send all available logs - backend will handle character-based truncation via user's AI analysis limit setting
     const { data } = await analyzeLogs({
       prompt: content,
-      logs: logsToSend
+      logs: props.logs
     }, { signal: currentAbortController.signal })
 
     if (data.code === 0) {

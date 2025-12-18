@@ -65,7 +65,8 @@ func (h *AuthHandler) Profile(c *gin.Context) {
 }
 
 type updateProfileReq struct {
-	RetentionDays int `json:"retentionDays"`
+	RetentionDays   int `json:"retentionDays"`
+	AIAnalysisLimit int `json:"aiAnalysisLimit"`
 }
 
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {
@@ -89,6 +90,10 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 
 	if req.RetentionDays > 0 {
 		user.RetentionDays = req.RetentionDays
+	}
+
+	if req.AIAnalysisLimit > 0 {
+		user.AIAnalysisLimit = req.AIAnalysisLimit
 	}
 
 	database.GetDB().Save(&user)
